@@ -6,6 +6,17 @@ type JjTargetOptions = {
   revsets?: string[];
 };
 
+const minimalDiffToolName = "aidescribe-git-minimal";
+
+const minimalDiffToolConfigArgs = [
+  "--config",
+  `merge-tools.${minimalDiffToolName}.program=git`,
+  "--config",
+  `merge-tools.${minimalDiffToolName}.diff-args=["diff","--no-index","--diff-algorithm=minimal","$left","$right"]`,
+  "--config",
+  `merge-tools.${minimalDiffToolName}.diff-expected-exit-codes=[0,1]`,
+];
+
 const getTargetRevsetExpression = (revsets: string[]) =>
   revsets.length > 0 ? revsets.join("|") : "@";
 
@@ -29,7 +40,7 @@ export const getDiff = async (options?: JjTargetOptions) => {
   const revsets = options?.revsets ?? [];
 
   const args = buildBaseJjArgs(globalArgs);
-  args.push("diff");
+  args.push(...minimalDiffToolConfigArgs, "diff", "--tool", minimalDiffToolName);
 
   if (revsets.length > 0) {
     args.push("--revisions", getTargetRevsetExpression(revsets));
