@@ -30,6 +30,9 @@ All unknown arguments are forwarded to `jj describe`, so this also works:
 aidescribe --at-operation @- @
 ```
 
+When revsets are provided (for example `aidescribe @-` or `aidescribe @- @`),
+the same revset target is also used for `jj diff` during AI message generation.
+
 ## Configuration
 
 `aidescribe` loads config with this precedence:

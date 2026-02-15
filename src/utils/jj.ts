@@ -8,8 +8,24 @@ export const assertJjRepo = async () => {
   }
 };
 
-export const getDiff = async () => {
-  const { stdout } = await execa("jj", ["--no-pager", "diff"]);
+export const getDiff = async (options?: {
+  globalArgs?: string[];
+  revsets?: string[];
+}) => {
+  const globalArgs = options?.globalArgs ?? [];
+  const revsets = options?.revsets ?? [];
+
+  const args = [...globalArgs];
+  if (!globalArgs.includes("--no-pager")) {
+    args.push("--no-pager");
+  }
+  args.push("diff");
+
+  if (revsets.length > 0) {
+    args.push("--revisions", revsets.join("|"));
+  }
+
+  const { stdout } = await execa("jj", args);
   return stdout.trim();
 };
 

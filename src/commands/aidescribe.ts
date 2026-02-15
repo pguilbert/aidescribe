@@ -7,6 +7,7 @@ import {
   text,
 } from "@clack/prompts";
 import { getConfig } from "../utils/config-runtime.js";
+import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
 import { generateDescription } from "../utils/openai.js";
@@ -79,8 +80,11 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
       );
     }
 
+    const forwardedArgs = getForwardedJjDescribeArgs(rawArgv);
+    const diffArgs = parseDescribeArgsForDiff(forwardedArgs);
+
     s?.start("Reading `jj diff`");
-    const diff = await getDiff();
+    const diff = await getDiff(diffArgs);
     s?.stop("Diff collected");
 
     if (!diff) {
@@ -104,8 +108,6 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     } else {
       console.log(`Generated description: ${generated}`);
     }
-
-    const forwardedArgs = getForwardedJjDescribeArgs(rawArgv);
 
     s?.start("Running `jj describe`");
     await runJjDescribe(finalMessage, forwardedArgs);
