@@ -24,6 +24,9 @@ This command:
 3. lets you confirm or edit the generated message (via `@clack/prompts`)
 4. runs `jj describe -m "<message>"` with your args forwarded
 
+If `jj diff` is empty for the targeted revision(s), `aidescribe` exits early
+without calling the AI or updating the description.
+
 All unknown arguments are forwarded to `jj describe`, so this also works:
 
 ```bash

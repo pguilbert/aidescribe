@@ -93,7 +93,14 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     s?.stop("Diff collected");
 
     if (!diff) {
-      throw new KnownError("No changes found in `jj diff`.");
+      if (interactive) {
+        outro("No changes found in `jj diff`. Skipping description update.");
+      } else {
+        console.log(
+          "No changes found in `jj diff`. Skipping description update.",
+        );
+      }
+      return;
     }
 
     s?.start("Reading current description");
