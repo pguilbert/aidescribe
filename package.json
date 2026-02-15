@@ -1,0 +1,35 @@
+{
+  "name": "aidescribe",
+  "version": "0.1.0",
+  "description": "Generate jj change descriptions with AI",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "aidescribe": "dist/cli.mjs"
+  },
+  "scripts": {
+    "build": "pkgroll --minify",
+    "type-check": "tsc",
+    "dev": "tsx src/cli.ts",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "@ai-sdk/openai": "^3.0.5",
+    "ai": "^6.0.13",
+    "cleye": "^2.0.0",
+    "execa": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "pkgroll": "^2.22.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
