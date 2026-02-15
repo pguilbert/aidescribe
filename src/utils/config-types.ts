@@ -1,6 +1,6 @@
 import { KnownError } from "./error.js";
 
-export const DEFAULT_MODEL = "gpt-5-nano";
+export const DEFAULT_MODEL = "gpt-5-mini";
 
 const commitTypes = ["conventional", "plain"] as const;
 export type CommitType = (typeof commitTypes)[number];
