@@ -11,7 +11,7 @@ import { getConfig } from "../utils/config-runtime.js";
 import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
-import { generateDescription } from "../utils/openai.js";
+import { generateDescription } from "../utils/ai.js";
 import {
   assertJjRepo,
   getCurrentDescriptions,
@@ -20,8 +20,8 @@ import {
 } from "../utils/jj.js";
 
 type MainFlags = {
+  aiProvider?: string;
   aiApiKey?: string;
-  aiBaseUrl?: string;
   aiModel?: string;
   aiLocale?: string;
   aiType?: string;
@@ -59,9 +59,11 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
 
     verbose?.start("Loading configuration");
     const config = await getConfig({
+      AI_PROVIDER: flags.aiProvider,
       OPENAI_API_KEY: flags.aiApiKey,
-      OPENAI_BASE_URL: flags.aiBaseUrl,
+      ANTHROPIC_API_KEY: flags.aiApiKey,
       OPENAI_MODEL: flags.aiModel,
+      ANTHROPIC_MODEL: flags.aiModel,
       locale: flags.aiLocale,
       type: flags.aiType,
       "max-length":
@@ -75,9 +77,11 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     });
     verbose?.stop("Configuration loaded");
 
-    if (!config.OPENAI_API_KEY) {
+    if (!config.apiKey) {
+      const requiredKey =
+        config.provider === "anthropic" ? "ANTHROPIC_API_KEY" : "OPENAI_API_KEY";
       throw new KnownError(
-        "OPENAI_API_KEY is required. Set it with `aidescribe config set OPENAI_API_KEY=...`, env var, or `--ai-api-key`.",
+        `${requiredKey} is required for provider "${config.provider}". Set it with \`aidescribe config set ${requiredKey}=...\`, env var, or \`--ai-api-key\`.`,
       );
     }
 

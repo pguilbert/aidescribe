@@ -53,26 +53,27 @@ in the AI prompt so the model can refine it when relevant or replace it when not
 Set values:
 
 ```bash
-aidescribe config set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-4o-mini type=conventional
+aidescribe config set AI_PROVIDER=openai OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-5-mini
+aidescribe config set AI_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-... ANTHROPIC_MODEL=claude-3-5-haiku-latest
 ```
 
 Read values:
 
 ```bash
 aidescribe config
-aidescribe config get OPENAI_MODEL locale type
+aidescribe config get AI_PROVIDER OPENAI_MODEL ANTHROPIC_MODEL locale type
 ```
 
 ### One-Run CLI Overrides
 
 ```bash
-aidescribe --ai-model gpt-4.1-mini --ai-locale en --ai-max-length 72
+aidescribe --ai-provider anthropic --ai-model claude-3-5-haiku-latest --ai-locale en
 ```
 
 Available override flags:
 
+- `--ai-provider` (`openai` or `anthropic`)
 - `--ai-api-key`
-- `--ai-base-url`
 - `--ai-model`
 - `--ai-locale`
 - `--ai-type` (`conventional` or `plain`)
@@ -82,9 +83,11 @@ Available override flags:
 
 ### Environment Variables
 
-- `OPENAI_API_KEY` (required)
-- `OPENAI_MODEL` (optional, default: `gpt-4o-mini`)
-- `OPENAI_BASE_URL` (optional; for OpenAI-compatible providers)
+- `AI_PROVIDER` (optional, default: `openai`, supports `openai` and `anthropic`)
+- `OPENAI_API_KEY` (required when `AI_PROVIDER=openai`)
+- `OPENAI_MODEL` (optional, default: `gpt-5-mini`)
+- `ANTHROPIC_API_KEY` (required when `AI_PROVIDER=anthropic`)
+- `ANTHROPIC_MODEL` (optional, default: `claude-3-5-haiku-latest`)
 - `AIDESCRIBE_LOCALE` (optional, default: `en`)
 - `AIDESCRIBE_TYPE` (optional, default: `conventional`, supports `conventional` and `plain`)
 - `AIDESCRIBE_MAX_LENGTH` (optional, default: `72`)

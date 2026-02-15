@@ -6,6 +6,7 @@ import { KnownError } from "./error.js";
 import {
   configParsers,
   hasOwn,
+  type AiProvider,
   type ConfigKeys,
   type RawConfig,
   type ValidConfig,
@@ -14,9 +15,11 @@ import {
 export const getConfigPath = () => path.join(os.homedir(), ".aidescribe");
 
 const getEnvConfig = (): RawConfig => ({
+  AI_PROVIDER: process.env.AI_PROVIDER,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   OPENAI_MODEL: process.env.OPENAI_MODEL,
+  ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL,
   locale: process.env.AIDESCRIBE_LOCALE,
   type: process.env.AIDESCRIBE_TYPE,
   "max-length": process.env.AIDESCRIBE_MAX_LENGTH,
@@ -68,16 +71,31 @@ export const getConfig = async (
     if (suppressErrors) {
       try {
         parsedConfig[key] = parser(value);
-      } catch {}
+      } catch {
+        parsedConfig[key] = parser(undefined);
+      }
       continue;
     }
 
     parsedConfig[key] = parser(value);
   }
 
+  const provider: AiProvider =
+    parsedConfig.AI_PROVIDER === "anthropic" ? "anthropic" : "openai";
+  const model =
+    provider === "anthropic"
+      ? String(parsedConfig.ANTHROPIC_MODEL)
+      : String(parsedConfig.OPENAI_MODEL);
+  const apiKey =
+    provider === "anthropic"
+      ? (parsedConfig.ANTHROPIC_API_KEY as string | undefined)
+      : (parsedConfig.OPENAI_API_KEY as string | undefined);
+
   return {
-    ...(parsedConfig as Omit<ValidConfig, "model">),
-    model: String(parsedConfig.OPENAI_MODEL),
+    ...(parsedConfig as Omit<ValidConfig, "provider" | "apiKey" | "model">),
+    provider,
+    apiKey,
+    model,
   };
 };
 

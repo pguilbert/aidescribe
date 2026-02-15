@@ -1,6 +1,10 @@
 import { KnownError } from "./error.js";
 
-export const DEFAULT_MODEL = "gpt-5-mini";
+export const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
+export const DEFAULT_ANTHROPIC_MODEL = "claude-3-5-haiku-latest";
+
+const aiProviders = ["openai", "anthropic"] as const;
+export type AiProvider = (typeof aiProviders)[number];
 
 const commitTypes = ["conventional", "plain"] as const;
 export type CommitType = (typeof commitTypes)[number];
@@ -16,21 +20,40 @@ const parseAssert = (name: string, condition: boolean, message: string) => {
 };
 
 const configParsers = {
+  AI_PROVIDER(provider?: unknown) {
+    if (!provider) {
+      return "openai" as AiProvider;
+    }
+
+    const providerValue = String(provider).toLowerCase();
+    parseAssert(
+      "AI_PROVIDER",
+      aiProviders.includes(providerValue as AiProvider),
+      'Invalid provider. Use "openai" or "anthropic".',
+    );
+    return providerValue as AiProvider;
+  },
   OPENAI_API_KEY(key?: unknown) {
     if (!key) {
       return undefined;
     }
     return String(key);
   },
-  OPENAI_BASE_URL(url?: unknown) {
-    if (!url) {
+  ANTHROPIC_API_KEY(key?: unknown) {
+    if (!key) {
       return undefined;
     }
-    return String(url);
+    return String(key);
   },
   OPENAI_MODEL(model?: unknown) {
     if (!model) {
-      return DEFAULT_MODEL;
+      return DEFAULT_OPENAI_MODEL;
+    }
+    return String(model);
+  },
+  ANTHROPIC_MODEL(model?: unknown) {
+    if (!model) {
+      return DEFAULT_ANTHROPIC_MODEL;
     }
     return String(model);
   },
@@ -107,6 +130,8 @@ type RawConfig = {
 export type ValidConfig = {
   [Key in ConfigKeys]: ReturnType<(typeof configParsers)[Key]>;
 } & {
+  provider: AiProvider;
+  apiKey: string | undefined;
   model: string;
 };
 

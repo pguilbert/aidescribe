@@ -1,4 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import type { ValidConfig } from "./config-types.js";
 import { KnownError } from "./error.js";
@@ -101,31 +102,28 @@ const printVerbosePayload = (
   systemPrompt: string,
   prompt: string,
 ) => {
-  const apiMode = isCustomBaseUrl(config.OPENAI_BASE_URL)
-    ? "chat-completions (compat mode)"
-    : "openai-default";
-
   const lines = [
     "[aidescribe] AI request payload",
+    `provider=${config.provider}`,
     `model=${config.model}`,
-    `baseURL=${config.OPENAI_BASE_URL ?? "https://api.openai.com/v1"}`,
-    `apiMode=${apiMode}`,
-    "",
-    "[system]",
-    systemPrompt,
-    "",
-    "[prompt]",
-    prompt,
-    "",
   ];
 
+  if (config.provider === "openai") {
+    lines.push("baseURL=https://api.openai.com/v1");
+    lines.push("apiMode=openai-default");
+  } else {
+    lines.push("baseURL=https://api.anthropic.com/v1");
+    lines.push("apiMode=anthropic-messages");
+  }
+
+  lines.push("", "[system]", systemPrompt, "", "[prompt]", prompt, "");
   process.stderr.write(`${lines.join("\n")}\n`);
 };
 
 const getContentText = (
-  content: Array<{ type: string; text?: string }>,
+  content: Array<{ type?: string; text?: string }> | undefined,
 ): string =>
-  content
+  (content ?? [])
     .filter((part) => part.type === "text" && typeof part.text === "string")
     .map((part) => part.text as string)
     .join("\n")
@@ -157,40 +155,67 @@ const printVerboseResponse = (
   process.stderr.write(`${lines.join("\n")}\n`);
 };
 
-const isCustomBaseUrl = (baseUrl?: string) => {
-  if (!baseUrl) {
-    return false;
-  }
-
-  const normalized = baseUrl.toLowerCase();
-  return (
-    normalized !== "https://api.openai.com/v1" &&
-    normalized !== "https://api.openai.com/v1/"
-  );
-};
-
 const truncateToLength = (message: string, maxLength: number) =>
   message.length > maxLength ? message.slice(0, maxLength).trim() : message;
+
+type ProviderResult = {
+  rawText: string;
+  contentText: string;
+  bodyText: string;
+  finishReason: string;
+  warnings: unknown;
+  reasoningText: string;
+};
+
+const resolveModel = (config: ValidConfig) => {
+  const provider =
+    config.provider === "openai"
+      ? createOpenAI({ apiKey: config.apiKey })
+      : createAnthropic({ apiKey: config.apiKey });
+  return provider(config.model);
+};
+
+const generateWithProvider = async (
+  diffForModel: string,
+  config: ValidConfig,
+  systemPrompt: string,
+): Promise<ProviderResult> => {
+  const model = resolveModel(config);
+  const result = await generateText({
+    model,
+    maxRetries: 2,
+    system: systemPrompt,
+    prompt: diffForModel,
+  });
+  const contentText = getContentText(
+    result.content as Array<{ type?: string; text?: string }>,
+  );
+
+  return {
+    rawText: result.text,
+    contentText,
+    bodyText: getResponseBodyText(result.response.body),
+    finishReason: result.finishReason,
+    warnings: result.warnings,
+    reasoningText: result.reasoningText ?? "",
+  };
+};
 
 export const generateDescription = async (
   diff: string,
   config: ValidConfig,
   options?: GenerateDescriptionOptions,
 ) => {
-  if (!config.OPENAI_API_KEY) {
-    throw new KnownError("OPENAI_API_KEY is required.");
+  if (!config.apiKey) {
+    const requiredKey =
+      config.provider === "anthropic" ? "ANTHROPIC_API_KEY" : "OPENAI_API_KEY";
+    throw new KnownError(`${requiredKey} is required.`);
   }
 
   const diffForModel =
     diff.length > config["max-diff-chars"]
       ? `${diff.slice(-config["max-diff-chars"])}\n\n[Diff truncated due to size]`
       : diff;
-
-  const provider = createOpenAI(
-    config.OPENAI_BASE_URL
-      ? { apiKey: config.OPENAI_API_KEY, baseURL: config.OPENAI_BASE_URL }
-      : { apiKey: config.OPENAI_API_KEY },
-  );
 
   const systemPrompt = generatePrompt(
     config.locale,
@@ -203,41 +228,31 @@ export const generateDescription = async (
     printVerbosePayload(config, systemPrompt, diffForModel);
   }
 
-  const model = isCustomBaseUrl(config.OPENAI_BASE_URL)
-    ? provider.chat(config.model)
-    : provider(config.model);
-
-  const result = await generateText({
-    model,
-    maxRetries: 2,
-    system: systemPrompt,
-    prompt: diffForModel,
-  });
-
-  const contentText = getContentText(
-    result.content as Array<{ type: string; text?: string }>,
+  const providerResult = await generateWithProvider(
+    diffForModel,
+    config,
+    systemPrompt,
   );
-  const bodyText = getResponseBodyText(result.response.body);
 
   if (options?.verbose) {
     printVerboseResponse(
-      result.text,
-      contentText,
-      bodyText,
-      result.finishReason,
-      result.warnings,
+      providerResult.rawText,
+      providerResult.contentText,
+      providerResult.bodyText,
+      providerResult.finishReason,
+      providerResult.warnings,
     );
   }
 
-  const message = sanitizeMessage(result.text, [
-    contentText,
-    result.reasoningText ?? "",
-    bodyText,
+  const message = sanitizeMessage(providerResult.rawText, [
+    providerResult.contentText,
+    providerResult.reasoningText,
+    providerResult.bodyText,
   ]);
 
   if (!message) {
     throw new KnownError(
-      `AI returned an empty description (finishReason=${result.finishReason}). Re-run with --verbose to inspect provider output.`,
+      `AI returned an empty description (finishReason=${providerResult.finishReason}). Re-run with --verbose to inspect provider output.`,
     );
   }
 

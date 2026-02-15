@@ -7,7 +7,7 @@ import {
 } from "../utils/config-runtime.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 
-const sensitiveKeys = ["OPENAI_API_KEY"];
+const sensitiveKeys = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY"];
 
 const maskValue = (key: string, value: unknown) => {
   if (!sensitiveKeys.includes(key)) {
@@ -44,9 +44,13 @@ export default command(
       if (!mode) {
         const config = await getConfig({}, {}, true);
         console.log(`Config file: ${getConfigPath()}`);
+        console.log(`AI_PROVIDER=${config.AI_PROVIDER}`);
         console.log(`OPENAI_API_KEY=${maskValue("OPENAI_API_KEY", config.OPENAI_API_KEY ?? "")}`);
-        console.log(`OPENAI_BASE_URL=${config.OPENAI_BASE_URL ?? ""}`);
+        console.log(
+          `ANTHROPIC_API_KEY=${maskValue("ANTHROPIC_API_KEY", config.ANTHROPIC_API_KEY ?? "")}`,
+        );
         console.log(`OPENAI_MODEL=${config.OPENAI_MODEL}`);
+        console.log(`ANTHROPIC_MODEL=${config.ANTHROPIC_MODEL}`);
         console.log(`locale=${config.locale}`);
         console.log(`type=${config.type}`);
         console.log(`max-length=${config["max-length"]}`);

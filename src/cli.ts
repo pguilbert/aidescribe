@@ -14,17 +14,20 @@ cli(
     name: "aidescribe",
     version,
     flags: {
+      aiProvider: {
+        type: String,
+        description:
+          "Override AI_PROVIDER for this run (supported: openai, anthropic)",
+      },
       aiApiKey: {
         type: String,
-        description: "Override OPENAI_API_KEY for this run",
-      },
-      aiBaseUrl: {
-        type: String,
-        description: "Override OPENAI_BASE_URL for this run",
+        description:
+          "Override provider API key for this run (maps to OPENAI_API_KEY/ANTHROPIC_API_KEY)",
       },
       aiModel: {
         type: String,
-        description: "Override OPENAI_MODEL for this run",
+        description:
+          "Override provider model for this run (maps to OPENAI_MODEL/ANTHROPIC_MODEL)",
       },
       aiLocale: {
         type: String,
