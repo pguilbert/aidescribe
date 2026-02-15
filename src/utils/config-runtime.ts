@@ -14,6 +14,9 @@ import {
 
 export const getConfigPath = () => path.join(os.homedir(), ".aidescribe");
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
 const getEnvConfig = (): RawConfig => ({
   AI_PROVIDER: process.env.AI_PROVIDER,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
@@ -36,14 +39,19 @@ const readConfigFile = async (): Promise<RawConfig> => {
   const configString = await fs.readFile(configPath, "utf8");
 
   try {
-    const parsed = JSON.parse(configString) as Record<string, unknown>;
+    const parsed = JSON.parse(configString);
+    if (!isRecord(parsed)) {
+      throw new KnownError(
+        `Invalid config file format at ${configPath}. Delete it or fix the JSON content.`,
+      );
+    }
     const rawConfig: RawConfig = Object.create(null);
 
     for (const [key, value] of Object.entries(parsed)) {
       if (!hasOwn(configParsers, key)) {
         continue;
       }
-      rawConfig[key as ConfigKeys] = value == null ? undefined : String(value);
+      rawConfig[key] = value == null ? undefined : String(value);
     }
 
     return rawConfig;
@@ -62,37 +70,51 @@ export const getConfig = async (
   const fileConfig = await readConfigFile();
   const effectiveEnvConfig = envConfig ?? getEnvConfig();
 
-  const parsedConfig: Record<string, unknown> = {};
-
-  for (const key of Object.keys(configParsers) as ConfigKeys[]) {
+  type ParsedConfig = Omit<ValidConfig, "provider" | "apiKey" | "model">;
+  const getValue = (key: ConfigKeys) =>
+    cliConfig?.[key] ?? effectiveEnvConfig[key] ?? fileConfig[key];
+  const parseValue = <Key extends ConfigKeys>(
+    key: Key,
+  ): ReturnType<(typeof configParsers)[Key]> => {
     const parser = configParsers[key];
-    const value = cliConfig?.[key] ?? effectiveEnvConfig[key] ?? fileConfig[key];
+    const value = getValue(key);
 
-    if (suppressErrors) {
-      try {
-        parsedConfig[key] = parser(value);
-      } catch {
-        parsedConfig[key] = parser(undefined);
-      }
-      continue;
+    if (!suppressErrors) {
+      return parser(value);
     }
 
-    parsedConfig[key] = parser(value);
-  }
+    try {
+      return parser(value);
+    } catch {
+      return parser(undefined);
+    }
+  };
+
+  const parsedConfig: ParsedConfig = {
+    AI_PROVIDER: parseValue("AI_PROVIDER"),
+    OPENAI_API_KEY: parseValue("OPENAI_API_KEY"),
+    ANTHROPIC_API_KEY: parseValue("ANTHROPIC_API_KEY"),
+    OPENAI_MODEL: parseValue("OPENAI_MODEL"),
+    ANTHROPIC_MODEL: parseValue("ANTHROPIC_MODEL"),
+    locale: parseValue("locale"),
+    type: parseValue("type"),
+    "max-length": parseValue("max-length"),
+    "max-diff-chars": parseValue("max-diff-chars"),
+  };
 
   const provider: AiProvider =
     parsedConfig.AI_PROVIDER === "anthropic" ? "anthropic" : "openai";
   const model =
     provider === "anthropic"
-      ? String(parsedConfig.ANTHROPIC_MODEL)
-      : String(parsedConfig.OPENAI_MODEL);
+      ? parsedConfig.ANTHROPIC_MODEL
+      : parsedConfig.OPENAI_MODEL;
   const apiKey =
     provider === "anthropic"
-      ? (parsedConfig.ANTHROPIC_API_KEY as string | undefined)
-      : (parsedConfig.OPENAI_API_KEY as string | undefined);
+      ? parsedConfig.ANTHROPIC_API_KEY
+      : parsedConfig.OPENAI_API_KEY;
 
   return {
-    ...(parsedConfig as Omit<ValidConfig, "provider" | "apiKey" | "model">),
+    ...parsedConfig,
     provider,
     apiKey,
     model,
@@ -108,12 +130,12 @@ export const setConfigs = async (keyValues: [key: string, value: string][]) => {
     }
 
     if (value === "") {
-      delete fileConfig[key as ConfigKeys];
+      delete fileConfig[key];
       continue;
     }
 
-    configParsers[key as ConfigKeys](value);
-    fileConfig[key as ConfigKeys] = value;
+    configParsers[key](value);
+    fileConfig[key] = value;
   }
 
   await fs.writeFile(

@@ -10,6 +10,9 @@ const extractResponseFromReasoning = (message: string): string => {
   return message.replace(thinkPattern, "").trim();
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
 const sanitizeLine = (line: string) =>
   line
     .trim()
@@ -70,7 +73,11 @@ const collectTextValues = (value: unknown, acc: string[]) => {
     return;
   }
 
-  const object = value as Record<string, unknown>;
+  if (!isRecord(value)) {
+    return;
+  }
+
+  const object = value;
   const keys = ["text", "output_text", "content"];
 
   for (const key of keys) {
@@ -120,14 +127,19 @@ const printVerbosePayload = (
   process.stderr.write(`${lines.join("\n")}\n`);
 };
 
-const getContentText = (
-  content: Array<{ type?: string; text?: string }> | undefined,
-): string =>
-  (content ?? [])
-    .filter((part) => part.type === "text" && typeof part.text === "string")
-    .map((part) => part.text as string)
-    .join("\n")
-    .trim();
+const isContentPart = (
+  value: unknown,
+): value is { type?: string; text?: string } => isRecord(value);
+
+const getContentText = (content: unknown): string =>
+  Array.isArray(content)
+    ? content
+        .filter(isContentPart)
+        .filter((part) => part.type === "text" && typeof part.text === "string")
+        .map((part) => part.text)
+        .join("\n")
+        .trim()
+    : "";
 
 const printVerboseResponse = (
   rawText: string,
@@ -187,9 +199,7 @@ const generateWithProvider = async (
     system: systemPrompt,
     prompt: diffForModel,
   });
-  const contentText = getContentText(
-    result.content as Array<{ type?: string; text?: string }>,
-  );
+  const contentText = getContentText(result.content);
 
   return {
     rawText: result.text,

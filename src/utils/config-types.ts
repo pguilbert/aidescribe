@@ -3,15 +3,15 @@ import { KnownError } from "./error.js";
 export const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
 export const DEFAULT_ANTHROPIC_MODEL = "claude-3-5-haiku-latest";
 
-const aiProviders = ["openai", "anthropic"] as const;
-export type AiProvider = (typeof aiProviders)[number];
+export type AiProvider = "openai" | "anthropic";
 
-const commitTypes = ["conventional", "plain"] as const;
-export type CommitType = (typeof commitTypes)[number];
+export type CommitType = "conventional" | "plain";
 
 const { hasOwnProperty } = Object.prototype;
-export const hasOwn = (object: unknown, key: PropertyKey) =>
-  hasOwnProperty.call(object, key);
+export const hasOwn = <T extends object, K extends PropertyKey>(
+  object: T,
+  key: K,
+): key is keyof T => hasOwnProperty.call(object, key);
 
 const parseAssert = (name: string, condition: boolean, message: string) => {
   if (!condition) {
@@ -19,19 +19,25 @@ const parseAssert = (name: string, condition: boolean, message: string) => {
   }
 };
 
+const isAiProvider = (value: string): value is AiProvider =>
+  value === "openai" || value === "anthropic";
+
+const isCommitType = (value: string): value is CommitType =>
+  value === "conventional" || value === "plain";
+
 const configParsers = {
   AI_PROVIDER(provider?: unknown) {
     if (!provider) {
-      return "openai" as AiProvider;
+      return "openai";
     }
 
     const providerValue = String(provider).toLowerCase();
     parseAssert(
       "AI_PROVIDER",
-      aiProviders.includes(providerValue as AiProvider),
+      isAiProvider(providerValue),
       'Invalid provider. Use "openai" or "anthropic".',
     );
-    return providerValue as AiProvider;
+    return providerValue;
   },
   OPENAI_API_KEY(key?: unknown) {
     if (!key) {
@@ -74,16 +80,16 @@ const configParsers = {
   },
   type(type?: unknown) {
     if (!type) {
-      return "conventional" as CommitType;
+      return "conventional";
     }
 
     const typeValue = String(type);
     parseAssert(
       "type",
-      commitTypes.includes(typeValue as CommitType),
+      isCommitType(typeValue),
       'Invalid type. Use "conventional" or "plain".',
     );
-    return typeValue as CommitType;
+    return typeValue;
   },
   "max-length"(maxLength?: unknown) {
     if (!maxLength) {
@@ -119,7 +125,7 @@ const configParsers = {
     parseAssert("max-diff-chars", parsed > 0, "Must be greater than 0");
     return parsed;
   },
-} as const;
+};
 
 type ConfigKeys = keyof typeof configParsers;
 

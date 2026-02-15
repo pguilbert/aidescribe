@@ -34,18 +34,20 @@ export default command(
   },
   (argv) => {
     (async () => {
-      const params = argv._ as unknown as {
-        mode?: string;
-        keyValues?: string[];
-      };
-      const mode = params.mode;
-      const keyValues = params.keyValues ?? [];
+      const positional = Array.isArray(argv._) ? argv._ : [];
+      const [modeRaw, ...keyValuesRaw] = positional;
+      const mode = typeof modeRaw === "string" ? modeRaw : undefined;
+      const keyValues = keyValuesRaw.filter(
+        (value): value is string => typeof value === "string",
+      );
 
       if (!mode) {
         const config = await getConfig({}, {}, true);
         console.log(`Config file: ${getConfigPath()}`);
         console.log(`AI_PROVIDER=${config.AI_PROVIDER}`);
-        console.log(`OPENAI_API_KEY=${maskValue("OPENAI_API_KEY", config.OPENAI_API_KEY ?? "")}`);
+        console.log(
+          `OPENAI_API_KEY=${maskValue("OPENAI_API_KEY", config.OPENAI_API_KEY ?? "")}`,
+        );
         console.log(
           `ANTHROPIC_API_KEY=${maskValue("ANTHROPIC_API_KEY", config.ANTHROPIC_API_KEY ?? "")}`,
         );
@@ -64,14 +66,14 @@ export default command(
           if (!hasOwn(config, key)) {
             continue;
           }
-          const value = config[key as keyof typeof config];
+          const value = config[key];
           console.log(`${key}=${maskValue(key, value ?? "")}`);
         }
         return;
       }
 
       if (mode === "set") {
-        const parsedPairs = keyValues.map((keyValue) => {
+        const parsedPairs = keyValues.map((keyValue): [string, string] => {
           const separator = keyValue.indexOf("=");
           if (separator < 0) {
             throw new KnownError(
@@ -81,7 +83,7 @@ export default command(
 
           const key = keyValue.slice(0, separator);
           const value = keyValue.slice(separator + 1);
-          return [key, value] as [string, string];
+          return [key, value];
         });
 
         await setConfigs(parsedPairs);

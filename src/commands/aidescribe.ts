@@ -1,11 +1,4 @@
-import {
-  cancel as cancelPrompt,
-  intro,
-  isCancel,
-  outro,
-  spinner,
-  text,
-} from "@clack/prompts";
+import { cancel, intro, isCancel, outro, spinner, text } from "@clack/prompts";
 import { bgLightRed, black } from "kolorist";
 import { getConfig } from "../utils/config-runtime.js";
 import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
@@ -79,7 +72,9 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
 
     if (!config.apiKey) {
       const requiredKey =
-        config.provider === "anthropic" ? "ANTHROPIC_API_KEY" : "OPENAI_API_KEY";
+        config.provider === "anthropic"
+          ? "ANTHROPIC_API_KEY"
+          : "OPENAI_API_KEY";
       throw new KnownError(
         `${requiredKey} is required for provider "${config.provider}". Set it with \`aidescribe config set ${requiredKey}=...\`, env var, or \`--ai-api-key\`.`,
       );
@@ -114,7 +109,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
 
     const reviewed = await reviewDescription(generated);
     if (!reviewed) {
-      cancelPrompt("Cancelled");
+      cancel("Cancelled");
       return;
     }
     const finalMessage = reviewed;
