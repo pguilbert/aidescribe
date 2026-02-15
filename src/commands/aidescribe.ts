@@ -51,11 +51,13 @@ const reviewDescription = async (generated: string) => {
 export default async (flags: MainFlags, rawArgv: string[]) =>
   (async () => {
     const interactive = isInteractive();
-    if (interactive) {
+    const detailedProgress = Boolean(flags.verbose);
+
+    if (interactive && detailedProgress) {
       intro("aidescribe");
     }
 
-    const s = interactive ? spinner() : null;
+    const s = interactive && detailedProgress ? spinner() : null;
 
     s?.start("Checking repository");
     await assertJjRepo();
@@ -111,6 +113,9 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
         : "No current description found",
     );
 
+    if (interactive && !detailedProgress) {
+      console.log("Generating description...");
+    }
     s?.start("Generating description");
     const generated = await generateDescription(diff, config, {
       verbose: flags.verbose,
