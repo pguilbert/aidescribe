@@ -93,6 +93,7 @@ const getResponseBodyText = (body: unknown): string => {
 
 type GenerateDescriptionOptions = {
   verbose?: boolean;
+  currentDescriptions?: string[];
 };
 
 const printVerbosePayload = (
@@ -195,6 +196,7 @@ export const generateDescription = async (
     config.locale,
     config["max-length"],
     config.type,
+    options?.currentDescriptions ?? [],
   );
 
   if (options?.verbose) {

@@ -34,6 +34,7 @@ export const generatePrompt = (
   locale: string,
   maxLength: number,
   type: CommitType,
+  currentDescriptions: string[] = [],
 ) =>
   [
     "Generate a concise git commit message title in present tense that precisely describes the key changes in the following code diff. Focus on what was changed, not just file names. Provide only the title, no description or body.",
@@ -42,6 +43,15 @@ export const generatePrompt = (
     "Exclude anything unnecessary such as translation. Your entire response will be passed directly into jj describe.",
     `IMPORTANT: Do not include any explanations, introductions, or additional text. Do not wrap the commit message in quotes or any other formatting. The commit message must not exceed ${maxLength} characters. Respond with ONLY the commit message text.`,
     "Be specific: include concrete details (package names, versions, functionality) rather than generic statements.",
+    currentDescriptions.length > 0
+      ? [
+          "Current change description(s) for the target revision(s):",
+          ...currentDescriptions
+            .slice(0, 5)
+            .map((description, index) => `${index + 1}. ${description}`),
+          "If one of these is still relevant, edit/improve it. If not relevant, replace it completely.",
+        ].join("\n")
+      : "",
     commitTypeRules[type],
     `The output response must be in format:\n${outputFormat[type]}`,
   ]

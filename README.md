@@ -33,6 +33,9 @@ aidescribe --at-operation @- @
 When revsets are provided (for example `aidescribe @-` or `aidescribe @- @`),
 the same revset target is also used for `jj diff` during AI message generation.
 
+If a current description already exists on the target revision(s), it is included
+in the AI prompt so the model can refine it when relevant or replace it when not.
+
 ## Configuration
 
 `aidescribe` loads config with this precedence:

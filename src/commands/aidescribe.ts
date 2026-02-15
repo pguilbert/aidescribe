@@ -11,7 +11,12 @@ import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
 import { generateDescription } from "../utils/openai.js";
-import { assertJjRepo, getDiff, runJjDescribe } from "../utils/jj.js";
+import {
+  assertJjRepo,
+  getCurrentDescriptions,
+  getDiff,
+  runJjDescribe,
+} from "../utils/jj.js";
 
 type MainFlags = {
   aiApiKey?: string;
@@ -91,9 +96,18 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
       throw new KnownError("No changes found in `jj diff`.");
     }
 
+    s?.start("Reading current description");
+    const currentDescriptions = await getCurrentDescriptions(diffArgs);
+    s?.stop(
+      currentDescriptions.length > 0
+        ? "Current description loaded"
+        : "No current description found",
+    );
+
     s?.start("Generating description");
     const generated = await generateDescription(diff, config, {
       verbose: flags.verbose,
+      currentDescriptions,
     });
     s?.stop("Description generated");
 
