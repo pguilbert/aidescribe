@@ -29,9 +29,6 @@ type MainFlags = {
   verbose?: boolean;
 };
 
-const isInteractive = () =>
-  Boolean(process.stdout.isTTY && process.stdin.isTTY && !process.env.CI);
-
 const reviewDescription = async (generated: string) => {
   const edited = await text({
     message: "Edit description",
@@ -50,14 +47,13 @@ const reviewDescription = async (generated: string) => {
 
 export default async (flags: MainFlags, rawArgv: string[]) =>
   (async () => {
-    const interactive = isInteractive();
     const detailedProgress = Boolean(flags.verbose);
 
-    if (interactive && detailedProgress) {
+    if (detailedProgress) {
       intro("aidescribe");
     }
 
-    const s = interactive && detailedProgress ? spinner() : null;
+    const s = detailedProgress ? spinner() : null;
 
     s?.start("Checking repository");
     await assertJjRepo();
@@ -95,13 +91,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     s?.stop("Diff collected");
 
     if (!diff) {
-      if (interactive) {
-        outro("No changes found in `jj diff`. Skipping description update.");
-      } else {
-        console.log(
-          "No changes found in `jj diff`. Skipping description update.",
-        );
-      }
+      outro("No changes found in `jj diff`. Skipping description update.");
       return;
     }
 
@@ -113,7 +103,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
         : "No current description found",
     );
 
-    if (interactive && !detailedProgress) {
+    if (!detailedProgress) {
       console.log("Generating description...");
     }
     s?.start("Generating description");
@@ -123,23 +113,16 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     });
     s?.stop("Description generated");
 
-    let finalMessage = generated;
-    if (interactive) {
-      const reviewed = await reviewDescription(generated);
-      if (!reviewed) {
-        cancelPrompt("Cancelled");
-        return;
-      }
-      finalMessage = reviewed;
-    } else {
-      console.log(`Generated description: ${generated}`);
+    const reviewed = await reviewDescription(generated);
+    if (!reviewed) {
+      cancelPrompt("Cancelled");
+      return;
     }
+    const finalMessage = reviewed;
 
     s?.start("Running `jj describe`");
     await runJjDescribe(finalMessage, forwardedArgs);
     s?.stop("Description applied");
 
-    if (interactive) {
-      outro("Done");
-    }
+    outro("Done");
   })().catch(handleCommandError);
