@@ -1,0 +1,114 @@
+import {
+  cancel as cancelPrompt,
+  intro,
+  isCancel,
+  outro,
+  spinner,
+  text,
+} from "@clack/prompts";
+import { getConfig } from "../utils/config-runtime.js";
+import { KnownError, handleCommandError } from "../utils/error.js";
+import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
+import { generateDescription } from "../utils/openai.js";
+import { assertJjRepo, getDiff, runJjDescribe } from "../utils/jj.js";
+
+type MainFlags = {
+  aiApiKey?: string;
+  aiBaseUrl?: string;
+  aiModel?: string;
+  aiLocale?: string;
+  aiType?: string;
+  aiMaxLength?: number;
+  aiMaxDiffChars?: number;
+};
+
+const isInteractive = () =>
+  Boolean(process.stdout.isTTY && process.stdin.isTTY && !process.env.CI);
+
+const reviewDescription = async (generated: string) => {
+  const edited = await text({
+    message: "Edit description",
+    placeholder: generated,
+    initialValue: generated,
+    validate: (value: string) =>
+      value.trim().length > 0 ? undefined : "Description cannot be empty",
+  });
+
+  if (isCancel(edited)) {
+    return null;
+  }
+
+  return String(edited).trim();
+};
+
+export default async (flags: MainFlags, rawArgv: string[]) =>
+  (async () => {
+    const interactive = isInteractive();
+    if (interactive) {
+      intro("aidescribe");
+    }
+
+    const s = interactive ? spinner() : null;
+
+    s?.start("Checking repository");
+    await assertJjRepo();
+    s?.stop("Repository detected");
+
+    s?.start("Loading configuration");
+    const config = await getConfig({
+      OPENAI_API_KEY: flags.aiApiKey,
+      OPENAI_BASE_URL: flags.aiBaseUrl,
+      OPENAI_MODEL: flags.aiModel,
+      locale: flags.aiLocale,
+      type: flags.aiType,
+      "max-length":
+        typeof flags.aiMaxLength === "number"
+          ? String(flags.aiMaxLength)
+          : undefined,
+      "max-diff-chars":
+        typeof flags.aiMaxDiffChars === "number"
+          ? String(flags.aiMaxDiffChars)
+          : undefined,
+    });
+    s?.stop("Configuration loaded");
+
+    if (!config.OPENAI_API_KEY) {
+      throw new KnownError(
+        "OPENAI_API_KEY is required. Set it with `aidescribe config set OPENAI_API_KEY=...`, env var, or `--ai-api-key`.",
+      );
+    }
+
+    s?.start("Reading `jj diff`");
+    const diff = await getDiff();
+    s?.stop("Diff collected");
+
+    if (!diff) {
+      throw new KnownError("No changes found in `jj diff`.");
+    }
+
+    s?.start("Generating description");
+    const generated = await generateDescription(diff, config);
+    s?.stop("Description generated");
+
+    let finalMessage = generated;
+    if (interactive) {
+      const reviewed = await reviewDescription(generated);
+      if (!reviewed) {
+        cancelPrompt("Cancelled");
+        return;
+      }
+      finalMessage = reviewed;
+    } else {
+      console.log(`Generated description: ${generated}`);
+    }
+
+    const forwardedArgs = getForwardedJjDescribeArgs(rawArgv);
+
+    s?.start("Running `jj describe`");
+    await runJjDescribe(finalMessage, forwardedArgs);
+    s?.stop("Description applied");
+
+    if (interactive) {
+      outro("Done");
+    }
+  })().catch(handleCommandError);
