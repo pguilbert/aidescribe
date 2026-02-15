@@ -6,6 +6,7 @@ import {
   spinner,
   text,
 } from "@clack/prompts";
+import { bgLightRed, black } from "kolorist";
 import { getConfig } from "../utils/config-runtime.js";
 import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
@@ -47,19 +48,16 @@ const reviewDescription = async (generated: string) => {
 
 export default async (flags: MainFlags, rawArgv: string[]) =>
   (async () => {
-    const detailedProgress = Boolean(flags.verbose);
+    const defaultSpinner = spinner();
+    const verbose = Boolean(flags.verbose) ? spinner() : null;
 
-    if (detailedProgress) {
-      intro("aidescribe");
-    }
+    intro(bgLightRed(black(" aidescribe ✨ ")));
 
-    const s = detailedProgress ? spinner() : null;
-
-    s?.start("Checking repository");
+    verbose?.start("Checking repository");
     await assertJjRepo();
-    s?.stop("Repository detected");
+    verbose?.stop("Repository detected");
 
-    s?.start("Loading configuration");
+    verbose?.start("Loading configuration");
     const config = await getConfig({
       OPENAI_API_KEY: flags.aiApiKey,
       OPENAI_BASE_URL: flags.aiBaseUrl,
@@ -75,7 +73,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
           ? String(flags.aiMaxDiffChars)
           : undefined,
     });
-    s?.stop("Configuration loaded");
+    verbose?.stop("Configuration loaded");
 
     if (!config.OPENAI_API_KEY) {
       throw new KnownError(
@@ -86,32 +84,29 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     const forwardedArgs = getForwardedJjDescribeArgs(rawArgv);
     const diffArgs = parseDescribeArgsForDiff(forwardedArgs);
 
-    s?.start("Reading `jj diff`");
+    verbose?.start("Reading `jj diff`");
     const diff = await getDiff(diffArgs);
-    s?.stop("Diff collected");
+    verbose?.stop("Diff collected");
 
     if (!diff) {
       outro("No changes found in `jj diff`. Skipping description update.");
       return;
     }
 
-    s?.start("Reading current description");
+    verbose?.start("Reading current description");
     const currentDescriptions = await getCurrentDescriptions(diffArgs);
-    s?.stop(
+    verbose?.stop(
       currentDescriptions.length > 0
         ? "Current description loaded"
         : "No current description found",
     );
 
-    if (!detailedProgress) {
-      console.log("Generating description...");
-    }
-    s?.start("Generating description");
+    defaultSpinner.start("Generating description");
     const generated = await generateDescription(diff, config, {
       verbose: flags.verbose,
       currentDescriptions,
     });
-    s?.stop("Description generated");
+    defaultSpinner.stop("Description generated");
 
     const reviewed = await reviewDescription(generated);
     if (!reviewed) {
@@ -120,9 +115,9 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     }
     const finalMessage = reviewed;
 
-    s?.start("Running `jj describe`");
+    verbose?.start("Running `jj describe`");
     await runJjDescribe(finalMessage, forwardedArgs);
-    s?.stop("Description applied");
+    verbose?.stop("Description applied");
 
     outro("Done");
   })().catch(handleCommandError);
