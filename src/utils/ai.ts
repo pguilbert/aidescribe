@@ -5,99 +5,8 @@ import type { ValidConfig } from "./config-types.js";
 import { KnownError } from "./error.js";
 import { generatePrompt } from "./prompt.js";
 
-const extractResponseFromReasoning = (message: string): string => {
-  const thinkPattern = /<think>[\s\S]*?<\/think>/gi;
-  return message.replace(thinkPattern, "").trim();
-};
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
-
-const sanitizeLine = (line: string) =>
-  line
-    .trim()
-    .replace(/^<[^>]*>\s*/, "")
-    .replace(/^\s*[-*]\s+/, "")
-    .replace(/(\w)\.$/, "$1")
-    .replace(/^["'`]|["'`]$/g, "")
-    .trim();
-
-const extractFirstMeaningfulLine = (message: string) => {
-  const lines = message
-    .trim()
-    .split("\n")
-    .map((line) => sanitizeLine(line))
-    .filter(Boolean);
-
-  for (const line of lines) {
-    if (line === "```") {
-      continue;
-    }
-    return line;
-  }
-
-  return "";
-};
-
-const sanitizeMessage = (message: string, fallbackMessages: string[] = []) => {
-  const candidates = [
-    extractResponseFromReasoning(message),
-    message,
-    ...fallbackMessages,
-  ];
-
-  for (const candidate of candidates) {
-    const firstLine = extractFirstMeaningfulLine(candidate);
-    if (firstLine) {
-      return firstLine;
-    }
-  }
-
-  return "";
-};
-
-const collectTextValues = (value: unknown, acc: string[]) => {
-  if (typeof value === "string") {
-    acc.push(value);
-    return;
-  }
-
-  if (!value || typeof value !== "object") {
-    return;
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      collectTextValues(item, acc);
-    }
-    return;
-  }
-
-  if (!isRecord(value)) {
-    return;
-  }
-
-  const object = value;
-  const keys = ["text", "output_text", "content"];
-
-  for (const key of keys) {
-    if (key in object) {
-      collectTextValues(object[key], acc);
-    }
-  }
-
-  for (const nestedValue of Object.values(object)) {
-    if (nestedValue && typeof nestedValue === "object") {
-      collectTextValues(nestedValue, acc);
-    }
-  }
-};
-
-const getResponseBodyText = (body: unknown): string => {
-  const values: string[] = [];
-  collectTextValues(body, values);
-  return values.join("\n").trim();
-};
 
 type GenerateDescriptionOptions = {
   verbose?: boolean;
@@ -127,24 +36,8 @@ const printVerbosePayload = (
   process.stderr.write(`${lines.join("\n")}\n`);
 };
 
-const isContentPart = (
-  value: unknown,
-): value is { type?: string; text?: string } => isRecord(value);
-
-const getContentText = (content: unknown): string =>
-  Array.isArray(content)
-    ? content
-        .filter(isContentPart)
-        .filter((part) => part.type === "text" && typeof part.text === "string")
-        .map((part) => part.text)
-        .join("\n")
-        .trim()
-    : "";
-
 const printVerboseResponse = (
   rawText: string,
-  contentText: string,
-  bodyText: string,
   finishReason: string,
   warnings: unknown,
 ) => {
@@ -156,12 +49,6 @@ const printVerboseResponse = (
     "[response.text]",
     rawText || "<empty>",
     "",
-    "[response.content text parts]",
-    contentText || "<empty>",
-    "",
-    "[response.body extracted text]",
-    bodyText || "<empty>",
-    "",
   ];
 
   process.stderr.write(`${lines.join("\n")}\n`);
@@ -172,8 +59,6 @@ const truncateToLength = (message: string, maxLength: number) =>
 
 type ProviderResult = {
   rawText: string;
-  contentText: string;
-  bodyText: string;
   finishReason: string;
   warnings: unknown;
   reasoningText: string;
@@ -199,12 +84,9 @@ const generateWithProvider = async (
     system: systemPrompt,
     prompt: diffForModel,
   });
-  const contentText = getContentText(result.content);
 
   return {
     rawText: result.text,
-    contentText,
-    bodyText: getResponseBodyText(result.response.body),
     finishReason: result.finishReason,
     warnings: result.warnings,
     reasoningText: result.reasoningText ?? "",
@@ -247,18 +129,12 @@ export const generateDescription = async (
   if (options?.verbose) {
     printVerboseResponse(
       providerResult.rawText,
-      providerResult.contentText,
-      providerResult.bodyText,
       providerResult.finishReason,
       providerResult.warnings,
     );
   }
 
-  const message = sanitizeMessage(providerResult.rawText, [
-    providerResult.contentText,
-    providerResult.reasoningText,
-    providerResult.bodyText,
-  ]);
+  const message = providerResult.rawText.trim();
 
   if (!message) {
     throw new KnownError(
