@@ -8,6 +8,8 @@ const localFlagsWithValues = new Set([
   "--ai-max-diff-chars",
 ]);
 
+const localBooleanFlags = new Set(["--verbose"]);
+
 export const getForwardedJjDescribeArgs = (rawArgv: string[]) => {
   const forwarded: string[] = [];
 
@@ -25,10 +27,16 @@ export const getForwardedJjDescribeArgs = (rawArgv: string[]) => {
       if (localFlagsWithValues.has(key)) {
         continue;
       }
+      if (localBooleanFlags.has(key)) {
+        continue;
+      }
     }
 
     if (localFlagsWithValues.has(token)) {
       index += 1;
+      continue;
+    }
+    if (localBooleanFlags.has(token)) {
       continue;
     }
 

@@ -20,6 +20,7 @@ type MainFlags = {
   aiType?: string;
   aiMaxLength?: number;
   aiMaxDiffChars?: number;
+  verbose?: boolean;
 };
 
 const isInteractive = () =>
@@ -87,7 +88,9 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     }
 
     s?.start("Generating description");
-    const generated = await generateDescription(diff, config);
+    const generated = await generateDescription(diff, config, {
+      verbose: flags.verbose,
+    });
     s?.stop("Description generated");
 
     let finalMessage = generated;

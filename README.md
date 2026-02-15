@@ -69,6 +69,7 @@ Available override flags:
 - `--ai-type` (`conventional` or `plain`)
 - `--ai-max-length`
 - `--ai-max-diff-chars`
+- `--verbose` (prints the exact system prompt and diff payload sent to the model)
 
 ### Environment Variables
 

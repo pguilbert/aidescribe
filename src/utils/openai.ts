@@ -27,9 +27,35 @@ const sanitizeMessage = (message: string) => {
     .replace(/^<[^>]*>\s*/, "");
 };
 
+type GenerateDescriptionOptions = {
+  verbose?: boolean;
+};
+
+const printVerbosePayload = (
+  config: ValidConfig,
+  systemPrompt: string,
+  prompt: string,
+) => {
+  const lines = [
+    "[aidescribe] AI request payload",
+    `model=${config.model}`,
+    `baseURL=${config.OPENAI_BASE_URL ?? "https://api.openai.com/v1"}`,
+    "",
+    "[system]",
+    systemPrompt,
+    "",
+    "[prompt]",
+    prompt,
+    "",
+  ];
+
+  process.stderr.write(`${lines.join("\n")}\n`);
+};
+
 export const generateDescription = async (
   diff: string,
   config: ValidConfig,
+  options?: GenerateDescriptionOptions,
 ) => {
   if (!config.OPENAI_API_KEY) {
     throw new KnownError("OPENAI_API_KEY is required.");
@@ -46,11 +72,21 @@ export const generateDescription = async (
       : { apiKey: config.OPENAI_API_KEY },
   );
 
+  const systemPrompt = generatePrompt(
+    config.locale,
+    config["max-length"],
+    config.type,
+  );
+
+  if (options?.verbose) {
+    printVerbosePayload(config, systemPrompt, diffForModel);
+  }
+
   const { text } = await generateText({
     model: provider(config.model),
     maxRetries: 2,
     maxOutputTokens: 200,
-    system: generatePrompt(config.locale, config["max-length"], config.type),
+    system: systemPrompt,
     prompt: diffForModel,
   });
 

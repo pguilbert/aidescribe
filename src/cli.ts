@@ -43,6 +43,12 @@ cli(
         type: Number,
         description: "Max diff chars sent to AI for this run (default: 40000)",
       },
+      verbose: {
+        type: Boolean,
+        description:
+          "Print the exact prompt payload sent to the AI model for this run",
+        default: false,
+      },
     },
     commands: [configCommand],
     help: {
