@@ -17,17 +17,17 @@ cli(
       aiProvider: {
         type: String,
         description:
-          "Override AI_PROVIDER for this run (supported: openai, anthropic)",
+          "Override provider for this run (supported: openai, anthropic)",
       },
       aiApiKey: {
         type: String,
         description:
-          "Override provider API key for this run (maps to OPENAI_API_KEY/ANTHROPIC_API_KEY)",
+          "Override provider API key for this run (maps to apiKey)",
       },
       aiModel: {
         type: String,
         description:
-          "Override provider model for this run (maps to OPENAI_MODEL/ANTHROPIC_MODEL)",
+          "Override provider model for this run (maps to model)",
       },
       aiLocale: {
         type: String,

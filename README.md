@@ -45,23 +45,37 @@ in the AI prompt so the model can refine it when relevant or replace it when not
 
 1. CLI flags (one run only)
 2. Environment variables
-3. Config file (`~/.aidescribe`)
+3. Config file (`~/.aidescribe.json`)
 4. Built-in defaults
+
+Example `~/.aidescribe.json`:
+
+```json
+{
+  "provider": "openai",
+  "apiKey": "sk-...",
+  "model": "gpt-5-mini",
+  "locale": "en",
+  "type": "conventional",
+  "maxLength": 72,
+  "maxDiffChars": 40000
+}
+```
 
 ### Config Command
 
 Set values:
 
 ```bash
-aidescribe config set AI_PROVIDER=openai OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-5-mini
-aidescribe config set AI_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-... ANTHROPIC_MODEL=claude-3-5-haiku-latest
+aidescribe config set provider=openai apiKey=sk-... model=gpt-5-mini
+aidescribe config set provider=anthropic apiKey=sk-ant-... model=claude-3-5-haiku-latest
 ```
 
 Read values:
 
 ```bash
 aidescribe config
-aidescribe config get AI_PROVIDER OPENAI_MODEL ANTHROPIC_MODEL locale type
+aidescribe config get provider model locale type
 ```
 
 ### One-Run CLI Overrides
@@ -83,11 +97,9 @@ Available override flags:
 
 ### Environment Variables
 
-- `AI_PROVIDER` (optional, default: `openai`, supports `openai` and `anthropic`)
-- `OPENAI_API_KEY` (required when `AI_PROVIDER=openai`)
-- `OPENAI_MODEL` (optional, default: `gpt-5-mini`)
-- `ANTHROPIC_API_KEY` (required when `AI_PROVIDER=anthropic`)
-- `ANTHROPIC_MODEL` (optional, default: `claude-3-5-haiku-latest`)
+- `AIDESCRIBE_PROVIDER` (optional, default: `openai`, supports `openai` and `anthropic`)
+- `AIDESCRIBE_API_KEY` (required)
+- `AIDESCRIBE_MODEL` (optional, default: `gpt-5-mini` or `claude-3-5-haiku-latest` based on provider)
 - `AIDESCRIBE_LOCALE` (optional, default: `en`)
 - `AIDESCRIBE_TYPE` (optional, default: `conventional`, supports `conventional` and `plain`)
 - `AIDESCRIBE_MAX_LENGTH` (optional, default: `72`)

@@ -1,5 +1,9 @@
 import { command } from "cleye";
-import { hasOwn } from "../utils/config-types.js";
+import {
+  ConfigKey,
+  isConfigKey,
+  SENSITIVE_CONFIG_KEYS,
+} from "../utils/config-types.js";
 import {
   getConfig,
   getConfigPath,
@@ -7,10 +11,8 @@ import {
 } from "../utils/config-runtime.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 
-const sensitiveKeys = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY"];
-
-const maskValue = (key: string, value: unknown) => {
-  if (!sensitiveKeys.includes(key)) {
+const maskValue = (key: ConfigKey, value: unknown) => {
+  if (!SENSITIVE_CONFIG_KEYS.includes(key)) {
     return String(value);
   }
 
@@ -42,28 +44,22 @@ export default command(
       );
 
       if (!mode) {
-        const config = await getConfig({}, {}, true);
+        const config = await getConfig();
         console.log(`Config file: ${getConfigPath()}`);
-        console.log(`AI_PROVIDER=${config.AI_PROVIDER}`);
-        console.log(
-          `OPENAI_API_KEY=${maskValue("OPENAI_API_KEY", config.OPENAI_API_KEY ?? "")}`,
-        );
-        console.log(
-          `ANTHROPIC_API_KEY=${maskValue("ANTHROPIC_API_KEY", config.ANTHROPIC_API_KEY ?? "")}`,
-        );
-        console.log(`OPENAI_MODEL=${config.OPENAI_MODEL}`);
-        console.log(`ANTHROPIC_MODEL=${config.ANTHROPIC_MODEL}`);
+        console.log(`provider=${config.provider}`);
+        console.log(`apiKey=${maskValue("apiKey", config.apiKey ?? "")}`);
+        console.log(`model=${config.model}`);
         console.log(`locale=${config.locale}`);
         console.log(`type=${config.type}`);
-        console.log(`max-length=${config["max-length"]}`);
-        console.log(`max-diff-chars=${config["max-diff-chars"]}`);
+        console.log(`maxLength=${config.maxLength}`);
+        console.log(`maxDiffChars=${config.maxDiffChars}`);
         return;
       }
 
       if (mode === "get") {
-        const config = await getConfig({}, {}, true);
+        const config = await getConfig();
         for (const key of keyValues) {
-          if (!hasOwn(config, key)) {
+          if (!isConfigKey(key)) {
             continue;
           }
           const value = config[key];

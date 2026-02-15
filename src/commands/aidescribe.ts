@@ -52,31 +52,19 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
 
     verbose?.start("Loading configuration");
     const config = await getConfig({
-      AI_PROVIDER: flags.aiProvider,
-      OPENAI_API_KEY: flags.aiApiKey,
-      ANTHROPIC_API_KEY: flags.aiApiKey,
-      OPENAI_MODEL: flags.aiModel,
-      ANTHROPIC_MODEL: flags.aiModel,
+      provider: flags.aiProvider,
+      apiKey: flags.aiApiKey,
+      model: flags.aiModel,
       locale: flags.aiLocale,
       type: flags.aiType,
-      "max-length":
-        typeof flags.aiMaxLength === "number"
-          ? String(flags.aiMaxLength)
-          : undefined,
-      "max-diff-chars":
-        typeof flags.aiMaxDiffChars === "number"
-          ? String(flags.aiMaxDiffChars)
-          : undefined,
+      maxLength: flags.aiMaxLength,
+      maxDiffChars: flags.aiMaxDiffChars,
     });
     verbose?.stop("Configuration loaded");
 
     if (!config.apiKey) {
-      const requiredKey =
-        config.provider === "anthropic"
-          ? "ANTHROPIC_API_KEY"
-          : "OPENAI_API_KEY";
       throw new KnownError(
-        `${requiredKey} is required for provider "${config.provider}". Set it with \`aidescribe config set ${requiredKey}=...\`, env var, or \`--ai-api-key\`.`,
+        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set apiKey=...\`, \`AIDESCRIBE_API_KEY\`, or \`--ai-api-key\`.`,
       );
     }
 

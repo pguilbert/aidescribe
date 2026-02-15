@@ -1,12 +1,9 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
-import type { ValidConfig } from "./config-types.js";
+import type { Config } from "./config-types.js";
 import { KnownError } from "./error.js";
 import { generatePrompt } from "./prompt.js";
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
 
 type GenerateDescriptionOptions = {
   verbose?: boolean;
@@ -14,7 +11,7 @@ type GenerateDescriptionOptions = {
 };
 
 const printVerbosePayload = (
-  config: ValidConfig,
+  config: Config,
   systemPrompt: string,
   prompt: string,
 ) => {
@@ -64,7 +61,7 @@ type ProviderResult = {
   reasoningText: string;
 };
 
-const resolveModel = (config: ValidConfig) => {
+const resolveModel = (config: Config) => {
   const provider =
     config.provider === "openai"
       ? createOpenAI({ apiKey: config.apiKey })
@@ -74,7 +71,7 @@ const resolveModel = (config: ValidConfig) => {
 
 const generateWithProvider = async (
   diffForModel: string,
-  config: ValidConfig,
+  config: Config,
   systemPrompt: string,
 ): Promise<ProviderResult> => {
   const model = resolveModel(config);
@@ -95,23 +92,21 @@ const generateWithProvider = async (
 
 export const generateDescription = async (
   diff: string,
-  config: ValidConfig,
+  config: Config,
   options?: GenerateDescriptionOptions,
 ) => {
   if (!config.apiKey) {
-    const requiredKey =
-      config.provider === "anthropic" ? "ANTHROPIC_API_KEY" : "OPENAI_API_KEY";
-    throw new KnownError(`${requiredKey} is required.`);
+    throw new KnownError("apiKey is required.");
   }
 
   const diffForModel =
-    diff.length > config["max-diff-chars"]
-      ? `${diff.slice(-config["max-diff-chars"])}\n\n[Diff truncated due to size]`
+    diff.length > config.maxDiffChars
+      ? `${diff.slice(-config.maxDiffChars)}\n\n[Diff truncated due to size]`
       : diff;
 
   const systemPrompt = generatePrompt(
     config.locale,
-    config["max-length"],
+    config.maxLength,
     config.type,
     options?.currentDescriptions ?? [],
   );
@@ -142,5 +137,5 @@ export const generateDescription = async (
     );
   }
 
-  return truncateToLength(message, config["max-length"]);
+  return truncateToLength(message, config.maxLength);
 };
