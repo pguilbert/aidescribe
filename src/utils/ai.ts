@@ -15,10 +15,12 @@ const printVerbosePayload = (
   systemPrompt: string,
   prompt: string,
 ) => {
+  const providerConfig = config[config.provider];
+  const model = providerConfig.model;
   const lines = [
     "[aidescribe] AI request payload",
     `provider=${config.provider}`,
-    `model=${config.model}`,
+    `model=${model}`,
   ];
 
   if (config.provider === "openai") {
@@ -62,11 +64,12 @@ type ProviderResult = {
 };
 
 const resolveModel = (config: Config) => {
+  const providerConfig = config[config.provider];
   const provider =
     config.provider === "openai"
-      ? createOpenAI({ apiKey: config.apiKey })
-      : createAnthropic({ apiKey: config.apiKey });
-  return provider(config.model);
+      ? createOpenAI({ apiKey: providerConfig.apiKey })
+      : createAnthropic({ apiKey: providerConfig.apiKey });
+  return provider(providerConfig.model);
 };
 
 const generateWithProvider = async (
@@ -95,7 +98,8 @@ export const generateDescription = async (
   config: Config,
   options?: GenerateDescriptionOptions,
 ) => {
-  if (!config.apiKey) {
+  const providerConfig = config[config.provider];
+  if (!providerConfig.apiKey) {
     throw new KnownError("apiKey is required.");
   }
 

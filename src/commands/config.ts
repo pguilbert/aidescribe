@@ -1,6 +1,6 @@
 import { command } from "cleye";
 import {
-  ConfigKey,
+  type ConfigKey,
   isConfigKey,
   SENSITIVE_CONFIG_KEYS,
 } from "../utils/config-types.js";
@@ -47,8 +47,14 @@ export default command(
         const config = await getConfig();
         console.log(`Config file: ${getConfigPath()}`);
         console.log(`provider=${config.provider}`);
-        console.log(`apiKey=${maskValue("apiKey", config.apiKey ?? "")}`);
-        console.log(`model=${config.model}`);
+        console.log(
+          `openai.apiKey=${maskValue("openai.apiKey", config.openai.apiKey ?? "")}`,
+        );
+        console.log(`openai.model=${config.openai.model}`);
+        console.log(
+          `anthropic.apiKey=${maskValue("anthropic.apiKey", config.anthropic.apiKey ?? "")}`,
+        );
+        console.log(`anthropic.model=${config.anthropic.model}`);
         console.log(`locale=${config.locale}`);
         console.log(`type=${config.type}`);
         console.log(`maxLength=${config.maxLength}`);
@@ -62,7 +68,16 @@ export default command(
           if (!isConfigKey(key)) {
             continue;
           }
-          const value = config[key];
+          let value: unknown;
+          if (key === "provider") value = config.provider;
+          else if (key === "locale") value = config.locale;
+          else if (key === "type") value = config.type;
+          else if (key === "maxLength") value = config.maxLength;
+          else if (key === "maxDiffChars") value = config.maxDiffChars;
+          else if (key === "openai.apiKey") value = config.openai.apiKey;
+          else if (key === "openai.model") value = config.openai.model;
+          else if (key === "anthropic.apiKey") value = config.anthropic.apiKey;
+          else if (key === "anthropic.model") value = config.anthropic.model;
           console.log(`${key}=${maskValue(key, value ?? "")}`);
         }
         return;

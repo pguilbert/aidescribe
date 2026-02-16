@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileExists } from "./fs.js";
 import { KnownError } from "./error.js";
 import {
-  CONFIG_KEYS,
+  TOP_LEVEL_CONFIG_KEYS,
   DEFAULT_ANTHROPIC_MODEL,
   DEFAULT_OPENAI_MODEL,
   DEFAULT_CONFIG,
@@ -13,6 +13,7 @@ import {
   type Config,
   type ConfigInput,
   type ConfigKey,
+  type ProviderConfig,
   isConfigKey,
 } from "./config-types.js";
 
@@ -78,12 +79,23 @@ const parsePositiveInt = (value: unknown, name: string): number | undefined => {
   return asNumber;
 };
 
+const parseProviderConfig = (
+  input: ProviderConfig | undefined,
+  provider: AiProvider,
+) => {
+  const apiKey = parseNonEmptyString(
+    input?.apiKey,
+    `${provider}.apiKey`,
+  );
+  const model =
+    parseNonEmptyString(input?.model, `${provider}.model`) ??
+    (provider === "anthropic" ? DEFAULT_ANTHROPIC_MODEL : DEFAULT_OPENAI_MODEL);
+
+  return { apiKey, model };
+};
+
 const parseConfig = (input: ConfigInput): Config => {
   const provider = parseProvider(input.provider) ?? DEFAULT_CONFIG.provider;
-  const model =
-    parseNonEmptyString(input.model, "model") ??
-    (provider === "anthropic" ? DEFAULT_ANTHROPIC_MODEL : DEFAULT_CONFIG.model);
-  const apiKey = parseNonEmptyString(input.apiKey, "apiKey");
   const locale = parseLocale(input.locale) ?? DEFAULT_CONFIG.locale;
   const type = parseCommitType(input.type) ?? DEFAULT_CONFIG.type;
   const maxLength =
@@ -92,26 +104,84 @@ const parseConfig = (input: ConfigInput): Config => {
     parsePositiveInt(input.maxDiffChars, "maxDiffChars") ??
     DEFAULT_CONFIG.maxDiffChars;
 
+  const openai = parseProviderConfig(input.openai, "openai");
+  const anthropic = parseProviderConfig(input.anthropic, "anthropic");
+
   return {
     provider,
-    apiKey,
-    model,
     locale,
     type,
     maxLength,
     maxDiffChars,
+    openai,
+    anthropic,
   };
 };
 
 const getEnvConfig = (): ConfigInput => ({
   provider: process.env.AIDESCRIBE_PROVIDER,
-  apiKey: process.env.AIDESCRIBE_API_KEY,
-  model: process.env.AIDESCRIBE_MODEL,
   locale: process.env.AIDESCRIBE_LOCALE,
   type: process.env.AIDESCRIBE_TYPE,
   maxLength: process.env.AIDESCRIBE_MAX_LENGTH,
   maxDiffChars: process.env.AIDESCRIBE_MAX_DIFF_CHARS,
+  openai: {
+    apiKey: process.env.AIDESCRIBE_OPENAI_API_KEY,
+    model: process.env.AIDESCRIBE_OPENAI_MODEL,
+  },
+  anthropic: {
+    apiKey: process.env.AIDESCRIBE_ANTHROPIC_API_KEY,
+    model: process.env.AIDESCRIBE_ANTHROPIC_MODEL,
+  },
 });
+
+const parseConfigFile = (parsed: Record<string, unknown>, configPath: string) => {
+  const rawConfig: ConfigInput = Object.create(null);
+
+  for (const [key, value] of Object.entries(parsed)) {
+    if (key === "openai" || key === "anthropic") {
+      if (value == null) {
+        continue;
+      }
+      if (!isRecord(value)) {
+        throw new KnownError(
+          `Invalid ${key} config in ${configPath}. Expected a JSON object.`,
+        );
+      }
+      const providerConfig: ProviderConfig = Object.create(null);
+      for (const [nestedKey, nestedValue] of Object.entries(value)) {
+        if (nestedKey !== "apiKey" && nestedKey !== "model") {
+          throw new KnownError(
+            `Invalid ${key}.${nestedKey} in ${configPath}. Supported keys: apiKey, model.`,
+          );
+        }
+        if (nestedKey === "apiKey") {
+          providerConfig.apiKey = nestedValue as string | undefined;
+        } else {
+          providerConfig.model = nestedValue as string | undefined;
+        }
+      }
+      rawConfig[key] = providerConfig;
+      continue;
+    }
+
+    if (
+      !TOP_LEVEL_CONFIG_KEYS.includes(
+        key as (typeof TOP_LEVEL_CONFIG_KEYS)[number],
+      )
+    ) {
+      const supported = [...TOP_LEVEL_CONFIG_KEYS, "openai", "anthropic"];
+      throw new KnownError(
+        `Invalid config key "${key}" in ${configPath}. Supported keys: ${supported.join(
+          ", ",
+        )}.`,
+      );
+    }
+
+    rawConfig[key as keyof ConfigInput] = value as unknown;
+  }
+
+  return rawConfig;
+};
 
 const readConfigFile = async (): Promise<ConfigInput> => {
   const configPath = getConfigPath();
@@ -130,19 +200,7 @@ const readConfigFile = async (): Promise<ConfigInput> => {
       );
     }
 
-    const rawConfig: ConfigInput = Object.create(null);
-    for (const [key, value] of Object.entries(parsed)) {
-      if (!isConfigKey(key)) {
-        throw new KnownError(
-          `Invalid config key "${key}" in ${configPath}. Supported keys: ${CONFIG_KEYS.join(
-            ", ",
-          )}.`,
-        );
-      }
-      rawConfig[key] = value;
-    }
-
-    return rawConfig;
+    return parseConfigFile(parsed, configPath);
   } catch (error) {
     if (error instanceof KnownError) {
       throw error;
@@ -153,64 +211,126 @@ const readConfigFile = async (): Promise<ConfigInput> => {
   }
 };
 
+const mergeProviderConfig = (
+  base: ProviderConfig | undefined,
+  override: ProviderConfig | undefined,
+) => ({
+  ...(base ?? Object.create(null)),
+  ...(override ?? Object.create(null)),
+});
+
 export const getConfig = async (
   cliConfig?: ConfigInput,
   envConfig?: ConfigInput,
 ): Promise<Config> => {
   const fileConfig = await readConfigFile();
   const effectiveEnvConfig = envConfig ?? getEnvConfig();
+
   const merged: ConfigInput = {
     ...fileConfig,
     ...effectiveEnvConfig,
     ...cliConfig,
+    openai: mergeProviderConfig(
+      fileConfig.openai,
+      mergeProviderConfig(effectiveEnvConfig.openai, cliConfig?.openai),
+    ),
+    anthropic: mergeProviderConfig(
+      fileConfig.anthropic,
+      mergeProviderConfig(effectiveEnvConfig.anthropic, cliConfig?.anthropic),
+    ),
   };
 
   return parseConfig(merged);
 };
 
-const normalizeConfigValue = (key: ConfigKey, value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    throw new KnownError(`${key} cannot be empty.`);
-  }
-
+const setTopLevelValue = (
+  config: ConfigInput,
+  key: ConfigKey,
+  value: string,
+) => {
   switch (key) {
     case "provider":
-      return parseProvider(trimmed);
+      config.provider = parseProvider(value);
+      return;
     case "type":
-      return parseCommitType(trimmed);
+      config.type = parseCommitType(value);
+      return;
     case "locale":
-      return parseLocale(trimmed);
+      config.locale = parseLocale(value);
+      return;
     case "maxLength":
-      return parsePositiveInt(trimmed, "maxLength");
+      config.maxLength = parsePositiveInt(value, "maxLength");
+      return;
     case "maxDiffChars":
-      return parsePositiveInt(trimmed, "maxDiffChars");
-    case "apiKey":
-    case "model":
-      return trimmed;
+      config.maxDiffChars = parsePositiveInt(value, "maxDiffChars");
+      return;
+    default:
+      return;
+  }
+};
+
+const setProviderValue = (
+  config: ConfigInput,
+  provider: AiProvider,
+  key: "apiKey" | "model",
+  value: string,
+) => {
+  const providerConfig = config[provider] ?? Object.create(null);
+  if (key === "apiKey") {
+    providerConfig.apiKey = parseNonEmptyString(value, `${provider}.apiKey`);
+  } else {
+    providerConfig.model = parseNonEmptyString(value, `${provider}.model`);
+  }
+  config[provider] = providerConfig;
+};
+
+const deleteProviderValue = (
+  config: ConfigInput,
+  provider: AiProvider,
+  key: "apiKey" | "model",
+) => {
+  const providerConfig = config[provider];
+  if (!providerConfig) {
+    return;
+  }
+  if (key === "apiKey") {
+    delete providerConfig.apiKey;
+  } else {
+    delete providerConfig.model;
   }
 };
 
 export const setConfigs = async (keyValues: [key: string, value: string][]) => {
   const fileConfig = await readConfigFile();
 
-  for (const [key, value] of keyValues) {
-    if (!isConfigKey(key)) {
-      throw new KnownError(`Invalid config property: ${key}`);
+  for (const [rawKey, value] of keyValues) {
+    if (!isConfigKey(rawKey)) {
+      throw new KnownError(`Invalid config property: ${rawKey}`);
     }
 
     if (value === "") {
-      delete fileConfig[key];
+      if (rawKey.startsWith("openai.") || rawKey.startsWith("anthropic.")) {
+        const [provider, nestedKey] = rawKey.split(".") as [
+          AiProvider,
+          "apiKey" | "model",
+        ];
+        deleteProviderValue(fileConfig, provider, nestedKey);
+      } else {
+        delete (fileConfig as Record<string, unknown>)[rawKey];
+      }
       continue;
     }
 
-    const normalized = normalizeConfigValue(key, value);
-    if (normalized === undefined) {
-      delete fileConfig[key];
+    if (rawKey.startsWith("openai.") || rawKey.startsWith("anthropic.")) {
+      const [provider, nestedKey] = rawKey.split(".") as [
+        AiProvider,
+        "apiKey" | "model",
+      ];
+      setProviderValue(fileConfig, provider, nestedKey, value);
       continue;
     }
 
-    fileConfig[key] = normalized;
+    setTopLevelValue(fileConfig, rawKey as ConfigKey, value);
   }
 
   parseConfig(fileConfig);

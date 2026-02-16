@@ -22,12 +22,12 @@ cli(
       aiApiKey: {
         type: String,
         description:
-          "Override provider API key for this run (maps to apiKey)",
+          "Override provider API key for this run (maps to <provider>.apiKey)",
       },
       aiModel: {
         type: String,
         description:
-          "Override provider model for this run (maps to model)",
+          "Override provider model for this run (maps to <provider>.model)",
       },
       aiLocale: {
         type: String,

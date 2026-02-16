@@ -51,20 +51,43 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     verbose?.stop("Repository detected");
 
     verbose?.start("Loading configuration");
-    const config = await getConfig({
+    const providerOverrides =
+      flags.aiApiKey || flags.aiModel
+        ? {
+            apiKey: flags.aiApiKey,
+            model: flags.aiModel,
+          }
+        : undefined;
+    const cliConfig = {
       provider: flags.aiProvider,
-      apiKey: flags.aiApiKey,
-      model: flags.aiModel,
       locale: flags.aiLocale,
       type: flags.aiType,
       maxLength: flags.aiMaxLength,
       maxDiffChars: flags.aiMaxDiffChars,
-    });
+      openai:
+        providerOverrides && flags.aiProvider === "openai"
+          ? providerOverrides
+          : providerOverrides && !flags.aiProvider
+            ? providerOverrides
+            : undefined,
+      anthropic:
+        providerOverrides && flags.aiProvider === "anthropic"
+          ? providerOverrides
+          : providerOverrides && !flags.aiProvider
+            ? providerOverrides
+            : undefined,
+    };
+    const config = await getConfig(cliConfig);
     verbose?.stop("Configuration loaded");
 
-    if (!config.apiKey) {
+    const providerConfig = config[config.provider];
+    if (!providerConfig.apiKey) {
+      const envVar =
+        config.provider === "openai"
+          ? "AIDESCRIBE_OPENAI_API_KEY"
+          : "AIDESCRIBE_ANTHROPIC_API_KEY";
       throw new KnownError(
-        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set apiKey=...\`, \`AIDESCRIBE_API_KEY\`, or \`--ai-api-key\`.`,
+        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set ${config.provider}.apiKey=...\`, \`${envVar}\`, or \`--ai-api-key\`.`,
       );
     }
 
