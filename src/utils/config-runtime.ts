@@ -4,13 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 import { fileExists } from "./fs.js";
 import { KnownError } from "./error.js";
-import {
-  DEFAULT_CONFIG,
-  type Config,
-  type ConfigInput,
-  type ConfigKey,
-  isConfigKey,
-} from "./config-types.js";
+import { DEFAULT_CONFIG, type Config, type ConfigInput, isConfigKey } from "./config-types.js";
 
 export const getConfigPath = () => path.join(os.homedir(), ".aidescribe.json");
 

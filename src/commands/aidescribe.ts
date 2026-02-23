@@ -38,7 +38,7 @@ const reviewDescription = async (generated: string) => {
 export default async (flags: MainFlags, rawArgv: string[]) =>
   (async () => {
     const defaultSpinner = spinner();
-    const verbose = Boolean(flags.verbose) ? spinner() : null;
+    const verbose = flags.verbose ? spinner() : null;
 
     intro(bgLightRed(black(" aidescribe ✨ ")));
 
