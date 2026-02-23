@@ -3,18 +3,20 @@
   "version": "0.1.0",
   "description": "Generate jj change descriptions with AI",
   "license": "MIT",
-  "type": "module",
-  "files": [
-    "dist"
-  ],
   "bin": {
     "aidescribe": "dist/cli.mjs"
   },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
   "scripts": {
     "build": "pkgroll --minify",
-    "type-check": "tsc",
+    "typecheck": "tsc",
     "dev": "tsx src/cli.ts",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
@@ -28,6 +30,7 @@
   "devDependencies": {
     "@types/node": "^24.3.0",
     "kolorist": "^1.8.0",
+    "oxfmt": "^0.35.0",
     "pkgroll": "^2.22.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"

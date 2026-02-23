@@ -5,11 +5,7 @@ import {
   isConfigKey,
   SENSITIVE_CONFIG_KEYS,
 } from "../utils/config-types.js";
-import {
-  getConfig,
-  getConfigPath,
-  setConfigs,
-} from "../utils/config-runtime.js";
+import { getConfig, getConfigPath, setConfigs } from "../utils/config-runtime.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 
 const maskValue = (key: ConfigKey, value: unknown) => {
@@ -21,9 +17,7 @@ const maskValue = (key: ConfigKey, value: unknown) => {
   if (!asString) {
     return "";
   }
-  return asString.length <= 4
-    ? `${asString}****`
-    : `${asString.slice(0, 4)}****`;
+  return asString.length <= 4 ? `${asString}****` : `${asString.slice(0, 4)}****`;
 };
 
 const CONFIG_OUTPUT_KEYS: ConfigKey[] = [
@@ -59,9 +53,7 @@ export default command(
       const positional = Array.isArray(argv._) ? argv._ : [];
       const [modeRaw, ...keyValuesRaw] = positional;
       const mode = typeof modeRaw === "string" ? modeRaw : undefined;
-      const keyValues = keyValuesRaw.filter(
-        (value): value is string => typeof value === "string",
-      );
+      const keyValues = keyValuesRaw.filter((value): value is string => typeof value === "string");
 
       if (!mode) {
         const config = await getConfig();

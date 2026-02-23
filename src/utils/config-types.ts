@@ -44,10 +44,7 @@ export type Config = {
 
 export type ConfigInput = Partial<Record<ConfigKey, unknown>>;
 
-export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = [
-  "openai.apiKey",
-  "anthropic.apiKey",
-];
+export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = ["openai.apiKey", "anthropic.apiKey"];
 
 export const isConfigKey = (value: string): value is ConfigKey =>
   (CONFIG_KEYS as readonly string[]).includes(value);

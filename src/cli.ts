@@ -16,18 +16,15 @@ cli(
     flags: {
       aiProvider: {
         type: String,
-        description:
-          "Override provider for this run (supported: openai, anthropic)",
+        description: "Override provider for this run (supported: openai, anthropic)",
       },
       aiApiKey: {
         type: String,
-        description:
-          "Override provider API key for this run (maps to <provider>.apiKey)",
+        description: "Override provider API key for this run (maps to <provider>.apiKey)",
       },
       aiModel: {
         type: String,
-        description:
-          "Override provider model for this run (maps to <provider>.model)",
+        description: "Override provider model for this run (maps to <provider>.model)",
       },
       aiLocale: {
         type: String,
@@ -48,8 +45,7 @@ cli(
       },
       verbose: {
         type: Boolean,
-        description:
-          "Print the exact prompt payload sent to the AI model for this run",
+        description: "Print the exact prompt payload sent to the AI model for this run",
         default: false,
       },
     },

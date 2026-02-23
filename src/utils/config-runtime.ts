@@ -41,10 +41,26 @@ const configSchema = z.object({
     .union([z.number(), z.string().transform((s) => Number(s.trim()))])
     .pipe(z.number().int().positive({ message: "must be a positive integer" }))
     .optional(),
-  "openai.apiKey": z.string().transform((s) => s.trim()).pipe(z.string().min(1)).optional(),
-  "openai.model": z.string().transform((s) => s.trim()).pipe(z.string().min(1)).optional(),
-  "anthropic.apiKey": z.string().transform((s) => s.trim()).pipe(z.string().min(1)).optional(),
-  "anthropic.model": z.string().transform((s) => s.trim()).pipe(z.string().min(1)).optional(),
+  "openai.apiKey": z
+    .string()
+    .transform((s) => s.trim())
+    .pipe(z.string().min(1))
+    .optional(),
+  "openai.model": z
+    .string()
+    .transform((s) => s.trim())
+    .pipe(z.string().min(1))
+    .optional(),
+  "anthropic.apiKey": z
+    .string()
+    .transform((s) => s.trim())
+    .pipe(z.string().min(1))
+    .optional(),
+  "anthropic.model": z
+    .string()
+    .transform((s) => s.trim())
+    .pipe(z.string().min(1))
+    .optional(),
 });
 
 const parseConfig = (input: ConfigInput): Config => {
@@ -76,9 +92,7 @@ const readConfigFile = async (): Promise<ConfigInput> => {
   try {
     const parsed = JSON.parse(configString);
     if (!isRecord(parsed)) {
-      throw new KnownError(
-        `Invalid config file format at ${configPath}. Expected a JSON object.`,
-      );
+      throw new KnownError(`Invalid config file format at ${configPath}. Expected a JSON object.`);
     }
 
     for (const key of Object.keys(parsed)) {
@@ -94,9 +108,7 @@ const readConfigFile = async (): Promise<ConfigInput> => {
     if (error instanceof KnownError) {
       throw error;
     }
-    throw new KnownError(
-      `Invalid config file format at ${configPath}. Expected a JSON object.`,
-    );
+    throw new KnownError(`Invalid config file format at ${configPath}. Expected a JSON object.`);
   }
 };
 

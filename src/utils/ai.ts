@@ -10,11 +10,7 @@ type GenerateDescriptionOptions = {
   currentDescriptions?: string[];
 };
 
-const printVerbosePayload = (
-  config: Config,
-  systemPrompt: string,
-  prompt: string,
-) => {
+const printVerbosePayload = (config: Config, systemPrompt: string, prompt: string) => {
   const model = getActiveProviderConfig(config).model;
   const lines = [
     "[aidescribe] AI request payload",
@@ -34,11 +30,7 @@ const printVerbosePayload = (
   process.stderr.write(`${lines.join("\n")}\n`);
 };
 
-const printVerboseResponse = (
-  rawText: string,
-  finishReason: string,
-  warnings: unknown,
-) => {
+const printVerboseResponse = (rawText: string, finishReason: string, warnings: unknown) => {
   const lines = [
     "[aidescribe] AI response payload",
     `finishReason=${finishReason}`,
@@ -65,9 +57,7 @@ type ProviderResult = {
 const resolveModel = (config: Config) => {
   const { apiKey, model } = getActiveProviderConfig(config);
   const provider =
-    config.provider === "openai"
-      ? createOpenAI({ apiKey })
-      : createAnthropic({ apiKey });
+    config.provider === "openai" ? createOpenAI({ apiKey }) : createAnthropic({ apiKey });
   return provider(model);
 };
 
@@ -120,11 +110,7 @@ export const generateDescription = async (
 
   let providerResult: ProviderResult;
   try {
-    providerResult = await generateWithProvider(
-      diffForModel,
-      config,
-      systemPrompt,
-    );
+    providerResult = await generateWithProvider(diffForModel, config, systemPrompt);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new KnownError(

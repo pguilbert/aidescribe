@@ -6,12 +6,7 @@ import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
 import { generateDescription } from "../utils/ai.js";
-import {
-  assertJjRepo,
-  getCurrentDescriptions,
-  getDiff,
-  runJjDescribe,
-} from "../utils/jj.js";
+import { assertJjRepo, getCurrentDescriptions, getDiff, runJjDescribe } from "../utils/jj.js";
 
 type MainFlags = {
   aiProvider?: string;
