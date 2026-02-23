@@ -68,12 +68,8 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     verbose?.stop("Configuration loaded");
 
     if (!getActiveProviderConfig(config).apiKey) {
-      const envVar =
-        config.provider === "openai"
-          ? "AIDESCRIBE_OPENAI_API_KEY"
-          : "AIDESCRIBE_ANTHROPIC_API_KEY";
       throw new KnownError(
-        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set ${config.provider}.apiKey=...\`, \`${envVar}\`, or \`--ai-api-key\`.`,
+        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set ${config.provider}.apiKey=...\` or \`--ai-api-key\`.`,
       );
     }
 

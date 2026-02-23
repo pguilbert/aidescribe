@@ -44,9 +44,8 @@ in the AI prompt so the model can refine it when relevant or replace it when not
 `aidescribe` loads config with this precedence:
 
 1. CLI flags (one run only)
-2. Environment variables
-3. Config file (`~/.aidescribe.json`)
-4. Built-in defaults
+2. Config file (`~/.aidescribe.json`)
+3. Built-in defaults
 
 Example `~/.aidescribe.json`:
 
@@ -100,15 +99,3 @@ Available override flags:
 - `--ai-max-length`
 - `--ai-max-diff-chars`
 - `--verbose` (prints the exact system prompt and diff payload sent to the model)
-
-### Environment Variables
-
-- `AIDESCRIBE_PROVIDER` (optional, default: `openai`, supports `openai` and `anthropic`)
-- `AIDESCRIBE_OPENAI_API_KEY` (required when `provider=openai`)
-- `AIDESCRIBE_OPENAI_MODEL` (optional, default: `gpt-5-mini`)
-- `AIDESCRIBE_ANTHROPIC_API_KEY` (required when `provider=anthropic`)
-- `AIDESCRIBE_ANTHROPIC_MODEL` (optional, default: `claude-3-5-haiku-latest`)
-- `AIDESCRIBE_LOCALE` (optional, default: `en`)
-- `AIDESCRIBE_TYPE` (optional, default: `conventional`, supports `conventional` and `plain`)
-- `AIDESCRIBE_MAX_LENGTH` (optional, default: `72`)
-- `AIDESCRIBE_MAX_DIFF_CHARS` (optional, default: `40000`)

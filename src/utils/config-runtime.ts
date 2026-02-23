@@ -120,47 +120,6 @@ const parseConfig = (input: ConfigInput): Config => {
   };
 };
 
-const getEnvConfig = (): ConfigInput => {
-  const envOrUndefined = (value: string | undefined) => {
-    if (value == null) {
-      return undefined;
-    }
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  };
-
-  const openaiApiKey = envOrUndefined(process.env.AIDESCRIBE_OPENAI_API_KEY);
-  const openaiModel = envOrUndefined(process.env.AIDESCRIBE_OPENAI_MODEL);
-  const anthropicApiKey = envOrUndefined(
-    process.env.AIDESCRIBE_ANTHROPIC_API_KEY,
-  );
-  const anthropicModel = envOrUndefined(
-    process.env.AIDESCRIBE_ANTHROPIC_MODEL,
-  );
-
-  return {
-    provider: envOrUndefined(process.env.AIDESCRIBE_PROVIDER),
-    locale: envOrUndefined(process.env.AIDESCRIBE_LOCALE),
-    type: envOrUndefined(process.env.AIDESCRIBE_TYPE),
-    maxLength: envOrUndefined(process.env.AIDESCRIBE_MAX_LENGTH),
-    maxDiffChars: envOrUndefined(process.env.AIDESCRIBE_MAX_DIFF_CHARS),
-    openai:
-      openaiApiKey || openaiModel
-        ? {
-            apiKey: openaiApiKey,
-            model: openaiModel,
-          }
-        : undefined,
-    anthropic:
-      anthropicApiKey || anthropicModel
-        ? {
-            apiKey: anthropicApiKey,
-            model: anthropicModel,
-          }
-        : undefined,
-  };
-};
-
 const parseConfigFile = (parsed: Record<string, unknown>, configPath: string) => {
   const rawConfig: ConfigInput = {};
 
@@ -251,27 +210,18 @@ const mergeProviderConfig = (
 
 type GetConfigOptions = {
   cliConfig?: ConfigInput;
-  envConfig?: ConfigInput;
   providerOverrides?: ProviderConfig;
 };
 
 export const getConfig = async (options?: GetConfigOptions): Promise<Config> => {
-  const { cliConfig, envConfig, providerOverrides } = options ?? {};
+  const { cliConfig, providerOverrides } = options ?? {};
   const fileConfig = await readConfigFile();
-  const effectiveEnvConfig = envConfig ?? getEnvConfig();
 
   const merged: ConfigInput = {
     ...fileConfig,
-    ...effectiveEnvConfig,
     ...cliConfig,
-    openai: mergeProviderConfig(
-      fileConfig.openai,
-      mergeProviderConfig(effectiveEnvConfig.openai, cliConfig?.openai),
-    ),
-    anthropic: mergeProviderConfig(
-      fileConfig.anthropic,
-      mergeProviderConfig(effectiveEnvConfig.anthropic, cliConfig?.anthropic),
-    ),
+    openai: mergeProviderConfig(fileConfig.openai, cliConfig?.openai),
+    anthropic: mergeProviderConfig(fileConfig.anthropic, cliConfig?.anthropic),
   };
 
   if (providerOverrides) {
