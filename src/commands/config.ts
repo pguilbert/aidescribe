@@ -2,6 +2,7 @@ import { command } from "cleye";
 import {
   type Config,
   type ConfigKey,
+  type AiProvider,
   isConfigKey,
   SENSITIVE_CONFIG_KEYS,
 } from "../utils/config-types.js";
@@ -38,29 +39,15 @@ const CONFIG_OUTPUT_KEYS: ConfigKey[] = [
   "maxDiffChars",
 ];
 
-const getConfigValue = (config: Config, key: ConfigKey) => {
-  switch (key) {
-    case "provider":
-      return config.provider;
-    case "locale":
-      return config.locale;
-    case "type":
-      return config.type;
-    case "maxLength":
-      return config.maxLength;
-    case "maxDiffChars":
-      return config.maxDiffChars;
-    case "openai.apiKey":
-      return config.openai.apiKey;
-    case "openai.model":
-      return config.openai.model;
-    case "anthropic.apiKey":
-      return config.anthropic.apiKey;
-    case "anthropic.model":
-      return config.anthropic.model;
-    default:
-      return "";
+const getConfigValue = (
+  config: Config,
+  key: ConfigKey,
+): string | number | undefined => {
+  if (key.includes(".")) {
+    const [provider, prop] = key.split(".") as [AiProvider, "apiKey" | "model"];
+    return config[provider][prop];
   }
+  return config[key as keyof Omit<Config, "openai" | "anthropic">];
 };
 
 const printConfigEntry = (config: Config, key: ConfigKey) => {

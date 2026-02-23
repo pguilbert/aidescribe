@@ -1,6 +1,7 @@
 import { cancel, intro, isCancel, outro, spinner, text } from "@clack/prompts";
 import { bgLightRed, black } from "kolorist";
 import { getConfig } from "../utils/config-runtime.js";
+import { getActiveProviderConfig } from "../utils/config-types.js";
 import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
@@ -51,32 +52,22 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     verbose?.stop("Repository detected");
 
     verbose?.start("Loading configuration");
-    const cliConfigBase = {
-      provider: flags.aiProvider,
-      locale: flags.aiLocale,
-      type: flags.aiType,
-      maxLength: flags.aiMaxLength,
-      maxDiffChars: flags.aiMaxDiffChars,
-    };
-    const providerOverrides =
-      flags.aiApiKey || flags.aiModel
-        ? {
-            apiKey: flags.aiApiKey,
-            model: flags.aiModel,
-          }
-        : undefined;
-    const baseConfig = await getConfig(cliConfigBase);
-    const cliConfig = providerOverrides
-      ? {
-          ...cliConfigBase,
-          [baseConfig.provider]: providerOverrides,
-        }
-      : cliConfigBase;
-    const config = providerOverrides ? await getConfig(cliConfig) : baseConfig;
+    const config = await getConfig({
+      cliConfig: {
+        provider: flags.aiProvider,
+        locale: flags.aiLocale,
+        type: flags.aiType,
+        maxLength: flags.aiMaxLength,
+        maxDiffChars: flags.aiMaxDiffChars,
+      },
+      providerOverrides:
+        flags.aiApiKey || flags.aiModel
+          ? { apiKey: flags.aiApiKey, model: flags.aiModel }
+          : undefined,
+    });
     verbose?.stop("Configuration loaded");
 
-    const providerConfig = config[config.provider];
-    if (!providerConfig.apiKey) {
+    if (!getActiveProviderConfig(config).apiKey) {
       const envVar =
         config.provider === "openai"
           ? "AIDESCRIBE_OPENAI_API_KEY"

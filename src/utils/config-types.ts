@@ -80,3 +80,5 @@ export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = [
 
 export const isConfigKey = (value: string): value is ConfigKey =>
   (CONFIG_KEYS as readonly string[]).includes(value);
+
+export const getActiveProviderConfig = (config: Config) => config[config.provider];

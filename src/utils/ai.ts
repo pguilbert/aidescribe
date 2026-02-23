@@ -1,7 +1,7 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
-import type { Config } from "./config-types.js";
+import { type Config, getActiveProviderConfig } from "./config-types.js";
 import { KnownError } from "./error.js";
 import { generatePrompt } from "./prompt.js";
 
@@ -15,8 +15,7 @@ const printVerbosePayload = (
   systemPrompt: string,
   prompt: string,
 ) => {
-  const providerConfig = config[config.provider];
-  const model = providerConfig.model;
+  const model = getActiveProviderConfig(config).model;
   const lines = [
     "[aidescribe] AI request payload",
     `provider=${config.provider}`,
@@ -64,12 +63,12 @@ type ProviderResult = {
 };
 
 const resolveModel = (config: Config) => {
-  const providerConfig = config[config.provider];
+  const { apiKey, model } = getActiveProviderConfig(config);
   const provider =
     config.provider === "openai"
-      ? createOpenAI({ apiKey: providerConfig.apiKey })
-      : createAnthropic({ apiKey: providerConfig.apiKey });
-  return provider(providerConfig.model);
+      ? createOpenAI({ apiKey })
+      : createAnthropic({ apiKey });
+  return provider(model);
 };
 
 const generateWithProvider = async (
@@ -98,8 +97,8 @@ export const generateDescription = async (
   config: Config,
   options?: GenerateDescriptionOptions,
 ) => {
-  const providerConfig = config[config.provider];
-  if (!providerConfig.apiKey) {
+  const activeProvider = getActiveProviderConfig(config);
+  if (!activeProvider.apiKey) {
     throw new KnownError("apiKey is required.");
   }
 
@@ -129,7 +128,7 @@ export const generateDescription = async (
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new KnownError(
-      `AI request failed for provider "${config.provider}" (model "${providerConfig.model}"): ${message}`,
+      `AI request failed for provider "${config.provider}" (model "${activeProvider.model}"): ${message}`,
     );
   }
 

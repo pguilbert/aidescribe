@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { z } from "zod";
 import { fileExists } from "./fs.js";
 import { KnownError } from "./error.js";
 import {
@@ -9,7 +10,6 @@ import {
   DEFAULT_OPENAI_MODEL,
   DEFAULT_CONFIG,
   type AiProvider,
-  type CommitType,
   type Config,
   type ConfigInput,
   type ConfigKey,
@@ -22,90 +22,92 @@ export const getConfigPath = () => path.join(os.homedir(), ".aidescribe.json");
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const parseNonEmptyString = (value: unknown, name: string) => {
-  if (value == null) {
-    return undefined;
-  }
-  if (typeof value !== "string") {
-    throw new KnownError(`${name} must be a string.`);
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
-};
+const nonEmptyString = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(z.string().min(1))
+  .optional()
+  .catch(undefined);
 
-const parseProvider = (value: unknown): AiProvider | undefined => {
-  const raw = parseNonEmptyString(value, "provider");
-  if (!raw) {
-    return undefined;
-  }
-  const normalized = raw.toLowerCase();
-  if (normalized !== "openai" && normalized !== "anthropic") {
-    throw new KnownError('provider must be "openai" or "anthropic".');
-  }
-  return normalized as AiProvider;
-};
+const providerSchema = z
+  .string()
+  .transform((s) => s.trim().toLowerCase())
+  .pipe(z.enum(["openai", "anthropic"]))
+  .optional()
+  .catch(undefined);
 
-const parseCommitType = (value: unknown): CommitType | undefined => {
-  const raw = parseNonEmptyString(value, "type");
-  if (!raw) {
-    return undefined;
-  }
-  if (raw !== "conventional" && raw !== "plain") {
-    throw new KnownError('type must be "conventional" or "plain".');
-  }
-  return raw as CommitType;
-};
+const commitTypeSchema = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(z.enum(["conventional", "plain"]))
+  .optional()
+  .catch(undefined);
 
-const parseLocale = (value: unknown) => {
-  const raw = parseNonEmptyString(value, "locale");
-  if (!raw) {
-    return undefined;
-  }
-  if (!/^[a-z-]+$/i.test(raw)) {
-    throw new KnownError('locale must match letters and dashes (e.g. "en").');
-  }
-  return raw;
-};
+const localeSchema = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(z.string().regex(/^[a-z-]+$/i, 'locale must match letters and dashes (e.g. "en")'))
+  .optional()
+  .catch(undefined);
 
-const parsePositiveInt = (value: unknown, name: string): number | undefined => {
-  if (value == null) {
-    return undefined;
-  }
-  const asNumber =
-    typeof value === "number" ? value : Number(String(value).trim());
-  if (!Number.isInteger(asNumber) || asNumber <= 0) {
-    throw new KnownError(`${name} must be a positive integer.`);
-  }
-  return asNumber;
-};
+const positiveInt = z
+  .union([z.number(), z.string().transform((s) => Number(s.trim()))])
+  .pipe(z.number().int().positive())
+  .optional()
+  .catch(undefined);
+
+const providerConfigSchema = z.object({
+  apiKey: nonEmptyString,
+  model: nonEmptyString,
+}).optional();
+
+// Strict schemas for setters - throw on invalid input instead of returning undefined
+const strictProvider = z
+  .string()
+  .transform((s) => s.trim().toLowerCase())
+  .pipe(z.enum(["openai", "anthropic"], { message: 'provider must be "openai" or "anthropic"' }));
+
+const strictCommitType = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(z.enum(["conventional", "plain"], { message: 'type must be "conventional" or "plain"' }));
+
+const strictLocale = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(z.string().regex(/^[a-z-]+$/i, 'locale must match letters and dashes (e.g. "en")'));
+
+const strictPositiveInt = (name: string) =>
+  z.string().transform((s) => {
+    const n = Number(s.trim());
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new Error(`${name} must be a positive integer`);
+    }
+    return n;
+  });
+
+const strictNonEmptyString = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(z.string().min(1));
 
 const parseProviderConfig = (
   input: ProviderConfig | undefined,
   provider: AiProvider,
 ) => {
-  const apiKey = parseNonEmptyString(
-    input?.apiKey,
-    `${provider}.apiKey`,
-  );
-  const model =
-    parseNonEmptyString(input?.model, `${provider}.model`) ??
-    (provider === "anthropic" ? DEFAULT_ANTHROPIC_MODEL : DEFAULT_OPENAI_MODEL);
-
-  return { apiKey, model };
+  const parsed = providerConfigSchema.parse(input);
+  return {
+    apiKey: parsed?.apiKey,
+    model: parsed?.model ?? (provider === "anthropic" ? DEFAULT_ANTHROPIC_MODEL : DEFAULT_OPENAI_MODEL),
+  };
 };
 
 const parseConfig = (input: ConfigInput): Config => {
-  const provider = parseProvider(input.provider) ?? DEFAULT_CONFIG.provider;
-  const locale = parseLocale(input.locale) ?? DEFAULT_CONFIG.locale;
-  const type = parseCommitType(input.type) ?? DEFAULT_CONFIG.type;
-  const maxLength =
-    parsePositiveInt(input.maxLength, "maxLength") ?? DEFAULT_CONFIG.maxLength;
-  const maxDiffChars =
-    parsePositiveInt(input.maxDiffChars, "maxDiffChars") ??
-    DEFAULT_CONFIG.maxDiffChars;
-
-  const openai = parseProviderConfig(input.openai, "openai");
-  const anthropic = parseProviderConfig(input.anthropic, "anthropic");
+  const provider = providerSchema.parse(input.provider) ?? DEFAULT_CONFIG.provider;
+  const locale = localeSchema.parse(input.locale) ?? DEFAULT_CONFIG.locale;
+  const type = commitTypeSchema.parse(input.type) ?? DEFAULT_CONFIG.type;
+  const maxLength = positiveInt.parse(input.maxLength) ?? DEFAULT_CONFIG.maxLength;
+  const maxDiffChars = positiveInt.parse(input.maxDiffChars) ?? DEFAULT_CONFIG.maxDiffChars;
 
   return {
     provider,
@@ -113,8 +115,8 @@ const parseConfig = (input: ConfigInput): Config => {
     type,
     maxLength,
     maxDiffChars,
-    openai,
-    anthropic,
+    openai: parseProviderConfig(input.openai, "openai"),
+    anthropic: parseProviderConfig(input.anthropic, "anthropic"),
   };
 };
 
@@ -160,7 +162,7 @@ const getEnvConfig = (): ConfigInput => {
 };
 
 const parseConfigFile = (parsed: Record<string, unknown>, configPath: string) => {
-  const rawConfig: ConfigInput = Object.create(null);
+  const rawConfig: ConfigInput = {};
 
   for (const [key, value] of Object.entries(parsed)) {
     if (key === "openai" || key === "anthropic") {
@@ -172,7 +174,7 @@ const parseConfigFile = (parsed: Record<string, unknown>, configPath: string) =>
           `Invalid ${key} config in ${configPath}. Expected a JSON object.`,
         );
       }
-      const providerConfig: ProviderConfig = Object.create(null);
+      const providerConfig: ProviderConfig = {};
       for (const [nestedKey, nestedValue] of Object.entries(value)) {
         if (nestedKey !== "apiKey" && nestedKey !== "model") {
           throw new KnownError(
@@ -215,7 +217,7 @@ const readConfigFile = async (): Promise<ConfigInput> => {
   const configPath = getConfigPath();
   const exists = await fileExists(configPath);
   if (!exists) {
-    return Object.create(null);
+    return {};
   }
 
   const configString = await fs.readFile(configPath, "utf8");
@@ -243,14 +245,18 @@ const mergeProviderConfig = (
   base: ProviderConfig | undefined,
   override: ProviderConfig | undefined,
 ) => ({
-  ...(base ?? Object.create(null)),
-  ...(override ?? Object.create(null)),
+  ...(base ?? {}),
+  ...(override ?? {}),
 });
 
-export const getConfig = async (
-  cliConfig?: ConfigInput,
-  envConfig?: ConfigInput,
-): Promise<Config> => {
+type GetConfigOptions = {
+  cliConfig?: ConfigInput;
+  envConfig?: ConfigInput;
+  providerOverrides?: ProviderConfig;
+};
+
+export const getConfig = async (options?: GetConfigOptions): Promise<Config> => {
+  const { cliConfig, envConfig, providerOverrides } = options ?? {};
   const fileConfig = await readConfigFile();
   const effectiveEnvConfig = envConfig ?? getEnvConfig();
 
@@ -268,6 +274,11 @@ export const getConfig = async (
     ),
   };
 
+  if (providerOverrides) {
+    const provider = providerSchema.parse(merged.provider) ?? DEFAULT_CONFIG.provider;
+    merged[provider] = mergeProviderConfig(merged[provider], providerOverrides);
+  }
+
   return parseConfig(merged);
 };
 
@@ -276,24 +287,31 @@ const setTopLevelValue = (
   key: ConfigKey,
   value: string,
 ) => {
-  switch (key) {
-    case "provider":
-      config.provider = parseProvider(value);
-      return;
-    case "type":
-      config.type = parseCommitType(value);
-      return;
-    case "locale":
-      config.locale = parseLocale(value);
-      return;
-    case "maxLength":
-      config.maxLength = parsePositiveInt(value, "maxLength");
-      return;
-    case "maxDiffChars":
-      config.maxDiffChars = parsePositiveInt(value, "maxDiffChars");
-      return;
-    default:
-      return;
+  try {
+    switch (key) {
+      case "provider":
+        config.provider = strictProvider.parse(value);
+        return;
+      case "type":
+        config.type = strictCommitType.parse(value);
+        return;
+      case "locale":
+        config.locale = strictLocale.parse(value);
+        return;
+      case "maxLength":
+        config.maxLength = strictPositiveInt("maxLength").parse(value);
+        return;
+      case "maxDiffChars":
+        config.maxDiffChars = strictPositiveInt("maxDiffChars").parse(value);
+        return;
+      default:
+        return;
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new KnownError(error.issues[0]?.message ?? "Invalid value");
+    }
+    throw error instanceof Error ? new KnownError(error.message) : error;
   }
 };
 
@@ -303,11 +321,11 @@ const setProviderValue = (
   key: "apiKey" | "model",
   value: string,
 ) => {
-  const providerConfig = config[provider] ?? Object.create(null);
-  if (key === "apiKey") {
-    providerConfig.apiKey = parseNonEmptyString(value, `${provider}.apiKey`);
-  } else {
-    providerConfig.model = parseNonEmptyString(value, `${provider}.model`);
+  const providerConfig = config[provider] ?? {};
+  try {
+    providerConfig[key] = strictNonEmptyString.parse(value);
+  } catch {
+    throw new KnownError(`${provider}.${key} must be a non-empty string`);
   }
   config[provider] = providerConfig;
 };
