@@ -52,6 +52,11 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     verbose?.stop("Repository detected");
 
     verbose?.start("Loading configuration");
+    // First pass: get config to determine provider
+    const baseConfig = await getConfig({
+      cliConfig: { provider: flags.aiProvider },
+    });
+    // Second pass: apply all overrides including provider-specific keys
     const config = await getConfig({
       cliConfig: {
         provider: flags.aiProvider,
@@ -59,11 +64,13 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
         type: flags.aiType,
         maxLength: flags.aiMaxLength,
         maxDiffChars: flags.aiMaxDiffChars,
+        ...(flags.aiApiKey && {
+          [`${baseConfig.provider}.apiKey`]: flags.aiApiKey,
+        }),
+        ...(flags.aiModel && {
+          [`${baseConfig.provider}.model`]: flags.aiModel,
+        }),
       },
-      providerOverrides:
-        flags.aiApiKey || flags.aiModel
-          ? { apiKey: flags.aiApiKey, model: flags.aiModel }
-          : undefined,
     });
     verbose?.stop("Configuration loaded");
 
