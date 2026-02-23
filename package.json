@@ -1,8 +1,25 @@
 {
   "name": "aidescribe",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Generate jj change descriptions with AI",
+  "keywords": [
+    "ai",
+    "cli",
+    "commit",
+    "jj",
+    "jujutsu",
+    "vcs"
+  ],
+  "homepage": "https://github.com/pguilbert/aidescribe#readme",
+  "bugs": {
+    "url": "https://github.com/pguilbert/aidescribe/issues"
+  },
   "license": "MIT",
+  "author": "Paul Guilbert",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pguilbert/aidescribe.git"
+  },
   "bin": {
     "aidescribe": "dist/cli.mjs"
   },
