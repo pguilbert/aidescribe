@@ -116,6 +116,28 @@ export const getConfig = async (options?: GetConfigOptions): Promise<Config> => 
   return parseConfig(merged);
 };
 
+export type CliConfigOverrides = {
+  aiProvider?: string;
+  aiLocale?: string;
+  aiType?: string;
+  aiMaxLength?: number;
+  aiMaxDiffChars?: number;
+};
+
+export const getConfigWithCliOverrides = async (
+  overrides: CliConfigOverrides,
+): Promise<Config> => {
+  const cliConfig: ConfigInput = {
+    provider: overrides.aiProvider,
+    locale: overrides.aiLocale,
+    type: overrides.aiType,
+    maxLength: overrides.aiMaxLength,
+    maxDiffChars: overrides.aiMaxDiffChars,
+  };
+
+  return getConfig({ cliConfig });
+};
+
 const validateConfig = (config: Record<string, unknown>) => {
   const result = configSchema.safeParse(config);
   if (!result.success) {

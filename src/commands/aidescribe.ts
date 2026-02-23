@@ -10,8 +10,6 @@ import { assertJjRepo, getCurrentDescriptions, getDiff, runJjDescribe } from "..
 
 type MainFlags = {
   aiProvider?: string;
-  aiApiKey?: string;
-  aiModel?: string;
   aiLocale?: string;
   aiType?: string;
   aiMaxLength?: number;
@@ -47,11 +45,6 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     verbose?.stop("Repository detected");
 
     verbose?.start("Loading configuration");
-    // First pass: get config to determine provider
-    const baseConfig = await getConfig({
-      cliConfig: { provider: flags.aiProvider },
-    });
-    // Second pass: apply all overrides including provider-specific keys
     const config = await getConfig({
       cliConfig: {
         provider: flags.aiProvider,
@@ -59,19 +52,13 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
         type: flags.aiType,
         maxLength: flags.aiMaxLength,
         maxDiffChars: flags.aiMaxDiffChars,
-        ...(flags.aiApiKey && {
-          [`${baseConfig.provider}.apiKey`]: flags.aiApiKey,
-        }),
-        ...(flags.aiModel && {
-          [`${baseConfig.provider}.model`]: flags.aiModel,
-        }),
       },
     });
     verbose?.stop("Configuration loaded");
 
     if (!getActiveProviderConfig(config).apiKey) {
       throw new KnownError(
-        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set ${config.provider}.apiKey=...\` or \`--ai-api-key\`.`,
+        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set ${config.provider}.apiKey=...\`.`,
       );
     }
 

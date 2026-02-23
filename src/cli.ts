@@ -18,14 +18,6 @@ cli(
         type: String,
         description: "Override provider for this run (supported: openai, anthropic)",
       },
-      aiApiKey: {
-        type: String,
-        description: "Override provider API key for this run (maps to <provider>.apiKey)",
-      },
-      aiModel: {
-        type: String,
-        description: "Override provider model for this run (maps to <provider>.model)",
-      },
       aiLocale: {
         type: String,
         description: "Override locale for this run (default: en)",

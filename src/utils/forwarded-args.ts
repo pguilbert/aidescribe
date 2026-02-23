@@ -1,7 +1,5 @@
 const localFlagsWithValues = new Set([
   "--ai-provider",
-  "--ai-api-key",
-  "--ai-model",
   "--ai-locale",
   "--ai-type",
   "--ai-max-length",
