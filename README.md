@@ -1,101 +1,25 @@
 # aidescribe
 
-`aidescribe` is a CLI for Jujutsu (`jj`) that generates a change description
-from `jj diff` and applies it with `jj describe`.
+CLI that generates [Jujutsu](https://jj-vcs.github.io/jj/) change descriptions with AI.
 
 ## Install
 
 ```bash
-npm install
-npm run build
-npm link
+pnpm add -g aidescribe
+```
+
+## Config
+
+```bash
+aidescribe config set provider=anthropic anthropic.apiKey=sk-ant-...
 ```
 
 ## Usage
 
 ```bash
+# describe current change
 aidescribe
+
+# describe parent change
+aidescribe -r @-
 ```
-
-This command:
-
-1. runs `jj diff`
-2. sends the diff to an LLM using the [AI SDK](https://ai-sdk.dev/)
-3. lets you confirm or edit the generated message (via `@clack/prompts`)
-4. runs `jj describe -m "<message>"` with your args forwarded
-
-If `jj diff` is empty for the targeted revision(s), `aidescribe` exits early
-without calling the AI or updating the description.
-
-All unknown arguments are forwarded to `jj describe`, so this also works:
-
-```bash
-aidescribe --at-operation @- @
-```
-
-When revsets are provided (for example `aidescribe @-` or `aidescribe @- @`),
-the same revset target is also used for `jj diff` during AI message generation.
-
-If a current description already exists on the target revision(s), it is included
-in the AI prompt so the model can refine it when relevant or replace it when not.
-
-## Configuration
-
-`aidescribe` loads config with this precedence:
-
-1. CLI flags (one run only)
-2. Config file (`~/.aidescribe.json`)
-3. Built-in defaults
-
-Example `~/.aidescribe.json`:
-
-```json
-{
-  "provider": "openai",
-  "openai": {
-    "apiKey": "sk-...",
-    "model": "gpt-5-mini"
-  },
-  "anthropic": {
-    "apiKey": "sk-ant-...",
-    "model": "claude-3-5-haiku-latest"
-  },
-  "locale": "en",
-  "type": "conventional",
-  "maxLength": 72,
-  "maxDiffChars": 40000
-}
-```
-
-### Config Command
-
-Set values:
-
-```bash
-aidescribe config set provider=openai openai.apiKey=sk-... openai.model=gpt-5-mini
-aidescribe config set provider=anthropic anthropic.apiKey=sk-ant-... anthropic.model=claude-3-5-haiku-latest
-```
-
-Read values:
-
-```bash
-aidescribe config
-aidescribe config get provider openai.model anthropic.model locale type
-```
-
-### One-Run CLI Overrides
-
-```bash
-aidescribe --ai-provider anthropic --ai-model claude-3-5-haiku-latest --ai-locale en
-```
-
-Available override flags:
-
-- `--ai-provider` (`openai` or `anthropic`)
-- `--ai-api-key`
-- `--ai-model`
-- `--ai-locale`
-- `--ai-type` (`conventional` or `plain`)
-- `--ai-max-length`
-- `--ai-max-diff-chars`
-- `--verbose` (prints the exact system prompt and diff payload sent to the model)
