@@ -51,6 +51,13 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     verbose?.stop("Repository detected");
 
     verbose?.start("Loading configuration");
+    const cliConfigBase = {
+      provider: flags.aiProvider,
+      locale: flags.aiLocale,
+      type: flags.aiType,
+      maxLength: flags.aiMaxLength,
+      maxDiffChars: flags.aiMaxDiffChars,
+    };
     const providerOverrides =
       flags.aiApiKey || flags.aiModel
         ? {
@@ -58,26 +65,14 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
             model: flags.aiModel,
           }
         : undefined;
-    const cliConfig = {
-      provider: flags.aiProvider,
-      locale: flags.aiLocale,
-      type: flags.aiType,
-      maxLength: flags.aiMaxLength,
-      maxDiffChars: flags.aiMaxDiffChars,
-      openai:
-        providerOverrides && flags.aiProvider === "openai"
-          ? providerOverrides
-          : providerOverrides && !flags.aiProvider
-            ? providerOverrides
-            : undefined,
-      anthropic:
-        providerOverrides && flags.aiProvider === "anthropic"
-          ? providerOverrides
-          : providerOverrides && !flags.aiProvider
-            ? providerOverrides
-            : undefined,
-    };
-    const config = await getConfig(cliConfig);
+    const baseConfig = await getConfig(cliConfigBase);
+    const cliConfig = providerOverrides
+      ? {
+          ...cliConfigBase,
+          [baseConfig.provider]: providerOverrides,
+        }
+      : cliConfigBase;
+    const config = providerOverrides ? await getConfig(cliConfig) : baseConfig;
     verbose?.stop("Configuration loaded");
 
     const providerConfig = config[config.provider];

@@ -1,5 +1,6 @@
 import { command } from "cleye";
 import {
+  type Config,
   type ConfigKey,
   isConfigKey,
   SENSITIVE_CONFIG_KEYS,
@@ -25,6 +26,48 @@ const maskValue = (key: ConfigKey, value: unknown) => {
     : `${asString.slice(0, 4)}****`;
 };
 
+const CONFIG_OUTPUT_KEYS: ConfigKey[] = [
+  "provider",
+  "openai.apiKey",
+  "openai.model",
+  "anthropic.apiKey",
+  "anthropic.model",
+  "locale",
+  "type",
+  "maxLength",
+  "maxDiffChars",
+];
+
+const getConfigValue = (config: Config, key: ConfigKey) => {
+  switch (key) {
+    case "provider":
+      return config.provider;
+    case "locale":
+      return config.locale;
+    case "type":
+      return config.type;
+    case "maxLength":
+      return config.maxLength;
+    case "maxDiffChars":
+      return config.maxDiffChars;
+    case "openai.apiKey":
+      return config.openai.apiKey;
+    case "openai.model":
+      return config.openai.model;
+    case "anthropic.apiKey":
+      return config.anthropic.apiKey;
+    case "anthropic.model":
+      return config.anthropic.model;
+    default:
+      return "";
+  }
+};
+
+const printConfigEntry = (config: Config, key: ConfigKey) => {
+  const value = getConfigValue(config, key);
+  console.log(`${key}=${maskValue(key, value ?? "")}`);
+};
+
 export default command(
   {
     name: "config",
@@ -46,19 +89,9 @@ export default command(
       if (!mode) {
         const config = await getConfig();
         console.log(`Config file: ${getConfigPath()}`);
-        console.log(`provider=${config.provider}`);
-        console.log(
-          `openai.apiKey=${maskValue("openai.apiKey", config.openai.apiKey ?? "")}`,
-        );
-        console.log(`openai.model=${config.openai.model}`);
-        console.log(
-          `anthropic.apiKey=${maskValue("anthropic.apiKey", config.anthropic.apiKey ?? "")}`,
-        );
-        console.log(`anthropic.model=${config.anthropic.model}`);
-        console.log(`locale=${config.locale}`);
-        console.log(`type=${config.type}`);
-        console.log(`maxLength=${config.maxLength}`);
-        console.log(`maxDiffChars=${config.maxDiffChars}`);
+        for (const key of CONFIG_OUTPUT_KEYS) {
+          printConfigEntry(config, key);
+        }
         return;
       }
 
@@ -68,17 +101,7 @@ export default command(
           if (!isConfigKey(key)) {
             continue;
           }
-          let value: unknown;
-          if (key === "provider") value = config.provider;
-          else if (key === "locale") value = config.locale;
-          else if (key === "type") value = config.type;
-          else if (key === "maxLength") value = config.maxLength;
-          else if (key === "maxDiffChars") value = config.maxDiffChars;
-          else if (key === "openai.apiKey") value = config.openai.apiKey;
-          else if (key === "openai.model") value = config.openai.model;
-          else if (key === "anthropic.apiKey") value = config.anthropic.apiKey;
-          else if (key === "anthropic.model") value = config.anthropic.model;
-          console.log(`${key}=${maskValue(key, value ?? "")}`);
+          printConfigEntry(config, key);
         }
         return;
       }

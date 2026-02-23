@@ -119,11 +119,19 @@ export const generateDescription = async (
     printVerbosePayload(config, systemPrompt, diffForModel);
   }
 
-  const providerResult = await generateWithProvider(
-    diffForModel,
-    config,
-    systemPrompt,
-  );
+  let providerResult: ProviderResult;
+  try {
+    providerResult = await generateWithProvider(
+      diffForModel,
+      config,
+      systemPrompt,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new KnownError(
+      `AI request failed for provider "${config.provider}" (model "${providerConfig.model}"): ${message}`,
+    );
+  }
 
   if (options?.verbose) {
     printVerboseResponse(

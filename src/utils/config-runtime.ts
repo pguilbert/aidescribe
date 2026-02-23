@@ -177,7 +177,10 @@ const parseConfigFile = (parsed: Record<string, unknown>, configPath: string) =>
       );
     }
 
-    rawConfig[key as keyof ConfigInput] = value as unknown;
+    const topLevelKey = key as (typeof TOP_LEVEL_CONFIG_KEYS)[number];
+    (rawConfig as Record<(typeof TOP_LEVEL_CONFIG_KEYS)[number], unknown>)[
+      topLevelKey
+    ] = value;
   }
 
   return rawConfig;
@@ -335,9 +338,12 @@ export const setConfigs = async (keyValues: [key: string, value: string][]) => {
 
   parseConfig(fileConfig);
 
+  const configPath = getConfigPath();
+  const tempPath = `${configPath}.${process.pid}.tmp`;
   await fs.writeFile(
-    getConfigPath(),
+    tempPath,
     `${JSON.stringify(fileConfig, null, 2)}\n`,
     "utf8",
   );
+  await fs.rename(tempPath, configPath);
 };
