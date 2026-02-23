@@ -118,21 +118,46 @@ const parseConfig = (input: ConfigInput): Config => {
   };
 };
 
-const getEnvConfig = (): ConfigInput => ({
-  provider: process.env.AIDESCRIBE_PROVIDER,
-  locale: process.env.AIDESCRIBE_LOCALE,
-  type: process.env.AIDESCRIBE_TYPE,
-  maxLength: process.env.AIDESCRIBE_MAX_LENGTH,
-  maxDiffChars: process.env.AIDESCRIBE_MAX_DIFF_CHARS,
-  openai: {
-    apiKey: process.env.AIDESCRIBE_OPENAI_API_KEY,
-    model: process.env.AIDESCRIBE_OPENAI_MODEL,
-  },
-  anthropic: {
-    apiKey: process.env.AIDESCRIBE_ANTHROPIC_API_KEY,
-    model: process.env.AIDESCRIBE_ANTHROPIC_MODEL,
-  },
-});
+const getEnvConfig = (): ConfigInput => {
+  const envOrUndefined = (value: string | undefined) => {
+    if (value == null) {
+      return undefined;
+    }
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  };
+
+  const openaiApiKey = envOrUndefined(process.env.AIDESCRIBE_OPENAI_API_KEY);
+  const openaiModel = envOrUndefined(process.env.AIDESCRIBE_OPENAI_MODEL);
+  const anthropicApiKey = envOrUndefined(
+    process.env.AIDESCRIBE_ANTHROPIC_API_KEY,
+  );
+  const anthropicModel = envOrUndefined(
+    process.env.AIDESCRIBE_ANTHROPIC_MODEL,
+  );
+
+  return {
+    provider: envOrUndefined(process.env.AIDESCRIBE_PROVIDER),
+    locale: envOrUndefined(process.env.AIDESCRIBE_LOCALE),
+    type: envOrUndefined(process.env.AIDESCRIBE_TYPE),
+    maxLength: envOrUndefined(process.env.AIDESCRIBE_MAX_LENGTH),
+    maxDiffChars: envOrUndefined(process.env.AIDESCRIBE_MAX_DIFF_CHARS),
+    openai:
+      openaiApiKey || openaiModel
+        ? {
+            apiKey: openaiApiKey,
+            model: openaiModel,
+          }
+        : undefined,
+    anthropic:
+      anthropicApiKey || anthropicModel
+        ? {
+            apiKey: anthropicApiKey,
+            model: anthropicModel,
+          }
+        : undefined,
+  };
+};
 
 const parseConfigFile = (parsed: Record<string, unknown>, configPath: string) => {
   const rawConfig: ConfigInput = Object.create(null);
