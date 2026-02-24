@@ -2,7 +2,7 @@ export type AiProvider = "openai" | "anthropic";
 export type CommitType = "conventional" | "plain";
 
 export const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
-export const DEFAULT_ANTHROPIC_MODEL = "claude-3-5-haiku-latest";
+export const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5";
 
 export const DEFAULT_CONFIG = {
   provider: "openai" as AiProvider,
@@ -44,7 +44,10 @@ export type Config = {
 
 export type ConfigInput = Partial<Record<ConfigKey, unknown>>;
 
-export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = ["openai.apiKey", "anthropic.apiKey"];
+export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = [
+  "openai.apiKey",
+  "anthropic.apiKey",
+];
 
 export const isConfigKey = (value: string): value is ConfigKey =>
   (CONFIG_KEYS as readonly string[]).includes(value);
