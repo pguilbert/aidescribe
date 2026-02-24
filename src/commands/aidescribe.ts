@@ -22,8 +22,8 @@ const reviewDescription = async (generated: string) => {
     message: "Edit description",
     placeholder: generated,
     initialValue: generated,
-    validate: (value: string) =>
-      value.trim().length > 0 ? undefined : "Description cannot be empty",
+    validate: (value: string | undefined) =>
+      value && value.trim().length > 0 ? undefined : "Description cannot be empty",
   });
 
   if (isCancel(edited)) {
