@@ -1,6 +1,6 @@
 {
   "name": "aidescribe",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Generate jj change descriptions with AI",
   "keywords": [
     "ai",
@@ -35,7 +35,9 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix"
+    "lint:fix": "oxlint --fix",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.46",
@@ -53,7 +55,8 @@
     "oxlint": "^1.50.0",
     "pkgroll": "^2.26.3",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=22"
