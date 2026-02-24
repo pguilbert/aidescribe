@@ -112,7 +112,19 @@ type GetConfigOptions = {
 
 export const getConfig = async (options?: GetConfigOptions): Promise<Config> => {
   const fileConfig = await readConfigFile();
-  const merged: ConfigInput = { ...fileConfig, ...options?.cliConfig };
+
+  // remove undefined values from cliConfig to allow fileConfig to take precedence
+  const cliConfig = options?.cliConfig
+    ? Object.fromEntries(
+        Object.entries(options.cliConfig).filter(([_, value]) => value !== undefined),
+      )
+    : {};
+
+  const merged: ConfigInput = {
+    ...fileConfig,
+    ...cliConfig,
+  };
+
   return parseConfig(merged);
 };
 
@@ -122,20 +134,6 @@ export type CliConfigOverrides = {
   aiType?: string;
   aiMaxLength?: number;
   aiMaxDiffChars?: number;
-};
-
-export const getConfigWithCliOverrides = async (
-  overrides: CliConfigOverrides,
-): Promise<Config> => {
-  const cliConfig: ConfigInput = {
-    provider: overrides.aiProvider,
-    locale: overrides.aiLocale,
-    type: overrides.aiType,
-    maxLength: overrides.aiMaxLength,
-    maxDiffChars: overrides.aiMaxDiffChars,
-  };
-
-  return getConfig({ cliConfig });
 };
 
 const validateConfig = (config: Record<string, unknown>) => {
