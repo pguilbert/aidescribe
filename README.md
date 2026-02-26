@@ -1,6 +1,12 @@
+<div align="center">
+
 # aidescribe
 
-CLI that generates [Jujutsu](https://jj-vcs.github.io/jj/) change descriptions with AI.
+**CLI that generates [Jujutsu](https://jj-vcs.github.io/jj/) change descriptions with AI.**
+
+<img src=".github/image.png" alt="aidescribe demo" width="700" />
+
+</div>
 
 ## Usage
 
