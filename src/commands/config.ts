@@ -1,10 +1,13 @@
 import { command } from "cleye";
 import {
+  type AiProvider,
   type Config,
   type ConfigKey,
   PROVIDER_IDS,
+  isProviderAliasKey,
   isConfigKey,
   SENSITIVE_CONFIG_KEYS,
+  toProviderConfigKey,
 } from "../utils/config-types.js";
 import { getConfig, getConfigPath, setConfigs } from "../utils/config-runtime.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
@@ -41,9 +44,21 @@ const CONFIG_OUTPUT_KEYS: ConfigKey[] = [
 
 const getConfigValue = (config: Config, key: ConfigKey) => config[key];
 
-const printConfigEntry = (config: Config, key: ConfigKey) => {
+const printConfigEntry = (config: Config, key: ConfigKey, displayKey: string = key) => {
   const value = getConfigValue(config, key);
-  console.log(`${key}=${maskValue(key, value ?? "")}`);
+  console.log(`${displayKey}=${maskValue(key, value ?? "")}`);
+};
+
+const resolveRequestedKey = (key: string, activeProvider: AiProvider): ConfigKey | null => {
+  if (isConfigKey(key)) {
+    return key;
+  }
+
+  if (isProviderAliasKey(key)) {
+    return toProviderConfigKey(activeProvider, key);
+  }
+
+  return null;
 };
 
 export default command(
@@ -74,10 +89,11 @@ export default command(
       if (mode === "get") {
         const config = await getConfig();
         for (const key of keyValues) {
-          if (!isConfigKey(key)) {
+          const resolvedKey = resolveRequestedKey(key, config.provider);
+          if (!resolvedKey) {
             continue;
           }
-          printConfigEntry(config, key);
+          printConfigEntry(config, resolvedKey, key);
         }
         return;
       }

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getActiveProviderConfig, isConfigKey } from "./config-types.js";
+import {
+  getActiveProviderConfig,
+  isConfigKey,
+  isProviderAliasKey,
+  toProviderConfigKey,
+} from "./config-types.js";
 import type { Config } from "./config-types.js";
 
 describe("isConfigKey", () => {
@@ -15,6 +20,19 @@ describe("isConfigKey", () => {
     expect(isConfigKey("invalid")).toBe(false);
     expect(isConfigKey("")).toBe(false);
     expect(isConfigKey("providers.openai.invalid")).toBe(false);
+  });
+});
+
+describe("provider key aliases", () => {
+  it("identifies supported alias keys", () => {
+    expect(isProviderAliasKey("apiKey")).toBe(true);
+    expect(isProviderAliasKey("model")).toBe(true);
+    expect(isProviderAliasKey("baseURL")).toBe(true);
+    expect(isProviderAliasKey("unknown")).toBe(false);
+  });
+
+  it("maps alias to provider-scoped config key", () => {
+    expect(toProviderConfigKey("mistral", "apiKey")).toBe("providers.mistral.apiKey");
   });
 });
 

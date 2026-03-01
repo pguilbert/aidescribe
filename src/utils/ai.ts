@@ -1,39 +1,17 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createMistral } from "@ai-sdk/mistral";
 import { generateText } from "ai";
-import {
-  type AiProvider,
-  type Config,
-  getActiveProviderConfig,
-  getProviderConfig,
-} from "./config-types.js";
+import { type Config, getActiveProviderConfig } from "./config-types.js";
 import { KnownError } from "./error.js";
 import { generatePrompt } from "./prompt.js";
+import { getProviderDefinition } from "./providers.js";
 
 type GenerateDescriptionOptions = {
   verbose?: boolean;
   currentDescriptions?: string[];
 };
 
-const PROVIDER_DETAILS: Record<AiProvider, { defaultBaseURL: string; apiMode: string }> = {
-  openai: {
-    defaultBaseURL: "https://api.openai.com/v1",
-    apiMode: "openai-default",
-  },
-  anthropic: {
-    defaultBaseURL: "https://api.anthropic.com/v1",
-    apiMode: "anthropic-messages",
-  },
-  mistral: {
-    defaultBaseURL: "https://api.mistral.ai/v1",
-    apiMode: "mistral-chat",
-  },
-};
-
 const printVerbosePayload = (config: Config, systemPrompt: string, prompt: string) => {
   const activeProvider = getActiveProviderConfig(config);
-  const providerDetails = PROVIDER_DETAILS[config.provider];
+  const providerDetails = getProviderDefinition(config.provider);
   const lines = [
     "[aidescribe] AI request payload",
     `provider=${config.provider}`,
@@ -72,25 +50,12 @@ type ProviderResult = {
 };
 
 const resolveModel = (config: Config) => {
-  const activeProvider = getProviderConfig(config, config.provider);
-
-  switch (config.provider) {
-    case "openai":
-      return createOpenAI({
-        apiKey: activeProvider.apiKey,
-        baseURL: activeProvider.baseURL,
-      })(activeProvider.model);
-    case "anthropic":
-      return createAnthropic({
-        apiKey: activeProvider.apiKey,
-        baseURL: activeProvider.baseURL,
-      })(activeProvider.model);
-    case "mistral":
-      return createMistral({
-        apiKey: activeProvider.apiKey,
-        baseURL: activeProvider.baseURL,
-      })(activeProvider.model);
-  }
+  const activeProvider = getActiveProviderConfig(config);
+  const provider = getProviderDefinition(config.provider);
+  return provider.createClient({
+    apiKey: activeProvider.apiKey,
+    baseURL: activeProvider.baseURL,
+  })(activeProvider.model);
 };
 
 const generateWithProvider = async (

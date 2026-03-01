@@ -9,6 +9,9 @@ import {
   DEFAULT_CONFIG,
   PROVIDER_IDS,
   PROVIDER_DEFAULT_MODELS,
+  isProviderAliasKey,
+  toProviderConfigKey,
+  type AiProvider,
   type Config,
   type ConfigInput,
   isConfigKey,
@@ -159,18 +162,46 @@ const validateConfig = (config: Record<string, unknown>) => {
   }
 };
 
+const resolveSetKey = (key: string, activeProvider: AiProvider) => {
+  if (isConfigKey(key)) {
+    return key;
+  }
+
+  if (isProviderAliasKey(key)) {
+    return toProviderConfigKey(activeProvider, key);
+  }
+
+  return null;
+};
+
+const normalizeProvider = (value: unknown): AiProvider | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return PROVIDER_IDS.includes(normalized as AiProvider) ? (normalized as AiProvider) : null;
+};
+
 export const setConfigs = async (keyValues: [key: string, value: string][]) => {
   const fileConfig: Record<string, unknown> = await readConfigFile();
+  let activeProvider = parseConfig(fileConfig as ConfigInput).provider;
 
   for (const [key, value] of keyValues) {
-    if (!isConfigKey(key)) {
+    const resolvedKey = resolveSetKey(key, activeProvider);
+    if (!resolvedKey) {
       throw new KnownError(`Invalid config property: ${key}`);
     }
 
     if (value === "") {
-      delete fileConfig[key];
+      delete fileConfig[resolvedKey];
     } else {
-      fileConfig[key] = value;
+      fileConfig[resolvedKey] = value;
+    }
+
+    if (resolvedKey === "provider") {
+      const nextProvider = normalizeProvider(value);
+      activeProvider = nextProvider ?? parseConfig(fileConfig as ConfigInput).provider;
     }
   }
 

@@ -26,6 +26,9 @@ pnpm add -g aidescribe
 
 ## Config
 
+`aidescribe config set` also supports active-provider aliases: `apiKey`, `model`, and `baseURL`.
+For example, after `provider=mistral`, `aidescribe config set model=mistral-medium-latest` updates `providers.mistral.model`.
+
 ### With Anthropic
 
 ```bash
