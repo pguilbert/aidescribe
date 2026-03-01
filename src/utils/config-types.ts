@@ -1,6 +1,6 @@
-import { PROVIDER_DEFAULT_MODELS, PROVIDER_IDS, type AiProvider } from "./providers.js";
+import { getProviderDefaultModel, PROVIDER_IDS, type AiProvider } from "./providers.js";
 
-export { PROVIDER_DEFAULT_MODELS, PROVIDER_IDS, type AiProvider };
+export { PROVIDER_IDS, type AiProvider };
 export type CommitType = "conventional" | "plain";
 
 export const PROVIDER_CONFIG_KEY_TYPES = ["apiKey", "model", "baseURL"] as const;
@@ -25,9 +25,9 @@ export const DEFAULT_CONFIG: Config = {
   type: "conventional",
   maxLength: 72,
   maxDiffChars: 40_000,
-  "providers.openai.model": PROVIDER_DEFAULT_MODELS.openai,
-  "providers.anthropic.model": PROVIDER_DEFAULT_MODELS.anthropic,
-  "providers.mistral.model": PROVIDER_DEFAULT_MODELS.mistral,
+  "providers.openai.model": getProviderDefaultModel("openai"),
+  "providers.anthropic.model": getProviderDefaultModel("anthropic"),
+  "providers.mistral.model": getProviderDefaultModel("mistral"),
 };
 
 export const CONFIG_KEYS: readonly ConfigKey[] = [

@@ -11,6 +11,7 @@ type ProviderClientOptions = {
 };
 
 type ProviderDefinition = {
+  label: string;
   defaultModel: string;
   defaultBaseURL: string;
   apiMode: string;
@@ -19,27 +20,27 @@ type ProviderDefinition = {
 
 const PROVIDERS: Record<AiProvider, ProviderDefinition> = {
   openai: {
+    label: "OpenAI",
     defaultModel: "gpt-5-mini",
     defaultBaseURL: "https://api.openai.com/v1",
     apiMode: "openai-default",
     createClient: ({ apiKey, baseURL }) => createOpenAI({ apiKey, baseURL }),
   },
   anthropic: {
+    label: "Anthropic",
     defaultModel: "claude-haiku-4-5",
     defaultBaseURL: "https://api.anthropic.com/v1",
     apiMode: "anthropic-messages",
     createClient: ({ apiKey, baseURL }) => createAnthropic({ apiKey, baseURL }),
   },
   mistral: {
+    label: "Mistral",
     defaultModel: "mistral-small-latest",
     defaultBaseURL: "https://api.mistral.ai/v1",
     apiMode: "mistral-chat",
     createClient: ({ apiKey, baseURL }) => createMistral({ apiKey, baseURL }),
   },
-};
-
-export const PROVIDER_DEFAULT_MODELS: Record<AiProvider, string> = Object.fromEntries(
-  PROVIDER_IDS.map((provider) => [provider, PROVIDERS[provider].defaultModel]),
-) as Record<AiProvider, string>;
+} as const;
 
 export const getProviderDefinition = (provider: AiProvider) => PROVIDERS[provider];
+export const getProviderDefaultModel = (provider: AiProvider) => PROVIDERS[provider].defaultModel;

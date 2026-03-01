@@ -3,6 +3,7 @@
 import { cli } from "cleye";
 import aidescribeCommand from "./commands/aidescribe.js";
 import configCommand from "./commands/config.js";
+import connectCommand from "./commands/connect.js";
 import pkg from "../package.json";
 
 const { description, version } = pkg;
@@ -41,7 +42,7 @@ cli(
         default: false,
       },
     },
-    commands: [configCommand],
+    commands: [configCommand, connectCommand],
     help: {
       description,
     },

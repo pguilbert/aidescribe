@@ -8,7 +8,6 @@ import {
   CONFIG_KEYS,
   DEFAULT_CONFIG,
   PROVIDER_IDS,
-  PROVIDER_DEFAULT_MODELS,
   isProviderAliasKey,
   toProviderConfigKey,
   type AiProvider,
@@ -16,6 +15,7 @@ import {
   type ConfigInput,
   isConfigKey,
 } from "./config-types.js";
+import { getProviderDefaultModel } from "./providers.js";
 
 export const getConfigPath = () => path.join(os.homedir(), ".aidescribe.json");
 
@@ -71,7 +71,7 @@ const parseConfig = (input: ConfigInput): Config => {
     PROVIDER_IDS.flatMap((provider) => [
       [
         `providers.${provider}.model`,
-        parsedRecord[`providers.${provider}.model`] ?? PROVIDER_DEFAULT_MODELS[provider],
+        parsedRecord[`providers.${provider}.model`] ?? getProviderDefaultModel(provider),
       ],
       [`providers.${provider}.apiKey`, parsedRecord[`providers.${provider}.apiKey`]],
       [`providers.${provider}.baseURL`, parsedRecord[`providers.${provider}.baseURL`]],
@@ -183,6 +183,19 @@ const normalizeProvider = (value: unknown): AiProvider | null => {
   return PROVIDER_IDS.includes(normalized as AiProvider) ? (normalized as AiProvider) : null;
 };
 
+const normalizeConfigValue = (key: string, value: string) => {
+  if (
+    key === "provider" ||
+    key.endsWith(".apiKey") ||
+    key.endsWith(".model") ||
+    key.endsWith(".baseURL")
+  ) {
+    return value.trim();
+  }
+
+  return value;
+};
+
 export const setConfigs = async (keyValues: [key: string, value: string][]) => {
   const fileConfig: Record<string, unknown> = await readConfigFile();
   let activeProvider = parseConfig(fileConfig as ConfigInput).provider;
@@ -193,14 +206,16 @@ export const setConfigs = async (keyValues: [key: string, value: string][]) => {
       throw new KnownError(`Invalid config property: ${key}`);
     }
 
-    if (value === "") {
+    const normalizedValue = normalizeConfigValue(resolvedKey, value);
+
+    if (normalizedValue === "") {
       delete fileConfig[resolvedKey];
     } else {
-      fileConfig[resolvedKey] = value;
+      fileConfig[resolvedKey] = normalizedValue;
     }
 
     if (resolvedKey === "provider") {
-      const nextProvider = normalizeProvider(value);
+      const nextProvider = normalizeProvider(normalizedValue);
       activeProvider = nextProvider ?? parseConfig(fileConfig as ConfigInput).provider;
     }
   }
