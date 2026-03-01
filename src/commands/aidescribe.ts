@@ -60,7 +60,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
       defaultSpinner.start("No provider configured, launching `aidescribe connect`");
       defaultSpinner.stop("No provider configured, launching setup wizard");
 
-      const connected = await runConnectWizard({ showIntro: false });
+      const connected = await runConnectWizard();
       if (!connected) {
         return;
       }
