@@ -1,12 +1,13 @@
 import { cancel, intro, isCancel, outro, spinner, text } from "@clack/prompts";
 import { bgLightRed, black } from "kolorist";
 import { getConfig } from "../utils/config-runtime.js";
-import { getActiveProviderConfig } from "../utils/config-types.js";
+import { getActiveProviderConfig, getProviderConfig, PROVIDER_IDS } from "../utils/config-types.js";
 import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
 import { generateDescription } from "../utils/ai.js";
 import { assertJjRepo, getCurrentDescriptions, getDiff, runJjDescribe } from "../utils/jj.js";
+import { runConnectWizard } from "./connect.js";
 
 type MainFlags = {
   aiProvider?: string;
@@ -37,6 +38,13 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
   (async () => {
     const defaultSpinner = spinner();
     const verbose = flags.verbose ? spinner() : null;
+    const cliConfig = {
+      provider: flags.aiProvider,
+      locale: flags.aiLocale,
+      type: flags.aiType,
+      maxLength: flags.aiMaxLength,
+      maxDiffChars: flags.aiMaxDiffChars,
+    };
 
     intro(bgLightRed(black(" aidescribe ✨ ")));
 
@@ -45,16 +53,22 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     verbose?.stop("Repository detected");
 
     verbose?.start("Loading configuration");
-    const config = await getConfig({
-      cliConfig: {
-        provider: flags.aiProvider,
-        locale: flags.aiLocale,
-        type: flags.aiType,
-        maxLength: flags.aiMaxLength,
-        maxDiffChars: flags.aiMaxDiffChars,
-      },
-    });
+    let config = await getConfig({ cliConfig });
     verbose?.stop("Configuration loaded");
+
+    if (!getActiveProviderConfig(config).apiKey) {
+      defaultSpinner.start("No provider configured, launching `aidescribe connect`");
+      defaultSpinner.stop("No provider configured, launching setup wizard");
+
+      const connected = await runConnectWizard({ showIntro: false });
+      if (!connected) {
+        return;
+      }
+
+      verbose?.start("Reloading configuration");
+      config = await getConfig({ cliConfig });
+      verbose?.stop("Configuration reloaded");
+    }
 
     if (!getActiveProviderConfig(config).apiKey) {
       throw new KnownError(

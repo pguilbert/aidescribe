@@ -23,13 +23,9 @@ Or install globally:
 pnpm add -g aidescribe
 ```
 
-Then connect a provider:
-
-```bash
-aidescribe connect
-```
-
 ### Generate descriptions
+
+aidescribe takes the same arguments as `jj describe`. For example:
 
 ```bash
 # describe current change
