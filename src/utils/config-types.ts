@@ -1,34 +1,49 @@
-export type AiProvider = "openai" | "anthropic";
+export const PROVIDER_IDS = ["openai", "anthropic", "mistral"] as const;
+export type AiProvider = (typeof PROVIDER_IDS)[number];
 export type CommitType = "conventional" | "plain";
 
-export const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
-export const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5";
-
-export const DEFAULT_CONFIG = {
-  provider: "openai" as AiProvider,
-  locale: "en",
-  type: "conventional" as CommitType,
-  maxLength: 72,
-  maxDiffChars: 40_000,
-  "openai.apiKey": undefined as string | undefined,
-  "openai.model": DEFAULT_OPENAI_MODEL,
-  "anthropic.apiKey": undefined as string | undefined,
-  "anthropic.model": DEFAULT_ANTHROPIC_MODEL,
+export const PROVIDER_DEFAULT_MODELS: Record<AiProvider, string> = {
+  openai: "gpt-5-mini",
+  anthropic: "claude-haiku-4-5",
+  mistral: "mistral-small-latest",
 };
 
-export const CONFIG_KEYS = [
+type ProviderConfigKeyType = "apiKey" | "model" | "baseURL";
+type ProviderConfigKey = `providers.${AiProvider}.${ProviderConfigKeyType}`;
+
+export type ConfigKey =
+  | "provider"
+  | "locale"
+  | "type"
+  | "maxLength"
+  | "maxDiffChars"
+  | ProviderConfigKey;
+
+const PROVIDER_CONFIG_KEYS = PROVIDER_IDS.flatMap((provider) =>
+  ["apiKey", "model", "baseURL"].map(
+    (key) => `providers.${provider}.${key}` as ProviderConfigKey,
+  ),
+);
+
+export const DEFAULT_CONFIG: Config = {
+  provider: "openai",
+  locale: "en",
+  type: "conventional",
+  maxLength: 72,
+  maxDiffChars: 40_000,
+  "providers.openai.model": PROVIDER_DEFAULT_MODELS.openai,
+  "providers.anthropic.model": PROVIDER_DEFAULT_MODELS.anthropic,
+  "providers.mistral.model": PROVIDER_DEFAULT_MODELS.mistral,
+};
+
+export const CONFIG_KEYS: readonly ConfigKey[] = [
   "provider",
   "locale",
   "type",
   "maxLength",
   "maxDiffChars",
-  "openai.apiKey",
-  "openai.model",
-  "anthropic.apiKey",
-  "anthropic.model",
-] as const;
-
-export type ConfigKey = (typeof CONFIG_KEYS)[number];
+  ...PROVIDER_CONFIG_KEYS,
+];
 
 export type Config = {
   provider: AiProvider;
@@ -36,20 +51,23 @@ export type Config = {
   type: CommitType;
   maxLength: number;
   maxDiffChars: number;
-  "openai.apiKey"?: string;
-  "openai.model": string;
-  "anthropic.apiKey"?: string;
-  "anthropic.model": string;
-};
+} & Record<`providers.${AiProvider}.model`, string> &
+  Partial<Record<`providers.${AiProvider}.apiKey` | `providers.${AiProvider}.baseURL`, string>>;
 
 export type ConfigInput = Partial<Record<ConfigKey, unknown>>;
 
-export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = ["openai.apiKey", "anthropic.apiKey"];
+export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = PROVIDER_IDS.map(
+  (provider) => `providers.${provider}.apiKey` as ConfigKey,
+);
 
 export const isConfigKey = (value: string): value is ConfigKey =>
   (CONFIG_KEYS as readonly string[]).includes(value);
 
-export const getActiveProviderConfig = (config: Config) => ({
-  apiKey: config[`${config.provider}.apiKey`],
-  model: config[`${config.provider}.model`],
+export const getProviderConfig = (config: Config, provider: AiProvider) => ({
+  provider,
+  apiKey: config[`providers.${provider}.apiKey`],
+  model: config[`providers.${provider}.model`],
+  baseURL: config[`providers.${provider}.baseURL`],
 });
+
+export const getActiveProviderConfig = (config: Config) => getProviderConfig(config, config.provider);

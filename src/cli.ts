@@ -16,7 +16,7 @@ cli(
     flags: {
       aiProvider: {
         type: String,
-        description: "Override provider for this run (supported: openai, anthropic)",
+        description: "Override provider for this run (supported: openai, anthropic, mistral)",
       },
       aiLocale: {
         type: String,

@@ -2,6 +2,7 @@ import { command } from "cleye";
 import {
   type Config,
   type ConfigKey,
+  PROVIDER_IDS,
   isConfigKey,
   SENSITIVE_CONFIG_KEYS,
 } from "../utils/config-types.js";
@@ -20,12 +21,18 @@ const maskValue = (key: ConfigKey, value: unknown) => {
   return asString.length <= 4 ? `${asString}****` : `${asString.slice(0, 4)}****`;
 };
 
+const providerOutputKeys = PROVIDER_IDS.flatMap(
+  (provider) =>
+    [
+      `providers.${provider}.apiKey`,
+      `providers.${provider}.model`,
+      `providers.${provider}.baseURL`,
+    ] as ConfigKey[],
+);
+
 const CONFIG_OUTPUT_KEYS: ConfigKey[] = [
   "provider",
-  "openai.apiKey",
-  "openai.model",
-  "anthropic.apiKey",
-  "anthropic.model",
+  ...providerOutputKeys,
   "locale",
   "type",
   "maxLength",

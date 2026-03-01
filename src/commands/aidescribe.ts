@@ -58,7 +58,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
 
     if (!getActiveProviderConfig(config).apiKey) {
       throw new KnownError(
-        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set ${config.provider}.apiKey=...\`.`,
+        `apiKey is required for provider "${config.provider}". Set it with \`aidescribe config set providers.${config.provider}.apiKey=...\`.`,
       );
     }
 

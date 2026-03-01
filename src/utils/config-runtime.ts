@@ -4,18 +4,39 @@ import path from "node:path";
 import { z } from "zod";
 import { fileExists } from "./fs.js";
 import { KnownError } from "./error.js";
-import { DEFAULT_CONFIG, type Config, type ConfigInput, isConfigKey } from "./config-types.js";
+import {
+  CONFIG_KEYS,
+  DEFAULT_CONFIG,
+  PROVIDER_IDS,
+  PROVIDER_DEFAULT_MODELS,
+  type Config,
+  type ConfigInput,
+  isConfigKey,
+} from "./config-types.js";
 
 export const getConfigPath = () => path.join(os.homedir(), ".aidescribe.json");
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+const nonEmptyTrimmedString = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(z.string().min(1));
+
+const providerSchemaShape = Object.fromEntries(
+  PROVIDER_IDS.flatMap((provider) => [
+    [`providers.${provider}.apiKey`, nonEmptyTrimmedString.optional()],
+    [`providers.${provider}.model`, nonEmptyTrimmedString.optional()],
+    [`providers.${provider}.baseURL`, nonEmptyTrimmedString.optional()],
+  ]),
+);
+
 const configSchema = z.object({
   provider: z
     .string()
     .transform((s) => s.trim().toLowerCase())
-    .pipe(z.enum(["openai", "anthropic"]))
+    .pipe(z.enum(PROVIDER_IDS))
     .optional(),
   locale: z
     .string()
@@ -35,31 +56,24 @@ const configSchema = z.object({
     .union([z.number(), z.string().transform((s) => Number(s.trim()))])
     .pipe(z.number().int().positive({ message: "must be a positive integer" }))
     .optional(),
-  "openai.apiKey": z
-    .string()
-    .transform((s) => s.trim())
-    .pipe(z.string().min(1))
-    .optional(),
-  "openai.model": z
-    .string()
-    .transform((s) => s.trim())
-    .pipe(z.string().min(1))
-    .optional(),
-  "anthropic.apiKey": z
-    .string()
-    .transform((s) => s.trim())
-    .pipe(z.string().min(1))
-    .optional(),
-  "anthropic.model": z
-    .string()
-    .transform((s) => s.trim())
-    .pipe(z.string().min(1))
-    .optional(),
+  ...providerSchemaShape,
 });
 
 const parseConfig = (input: ConfigInput): Config => {
   const lenient = configSchema.safeParse(input);
   const parsed = lenient.success ? lenient.data : {};
+  const parsedRecord = parsed as Record<string, unknown>;
+
+  const providerConfig = Object.fromEntries(
+    PROVIDER_IDS.flatMap((provider) => [
+      [
+        `providers.${provider}.model`,
+        parsedRecord[`providers.${provider}.model`] ?? PROVIDER_DEFAULT_MODELS[provider],
+      ],
+      [`providers.${provider}.apiKey`, parsedRecord[`providers.${provider}.apiKey`]],
+      [`providers.${provider}.baseURL`, parsedRecord[`providers.${provider}.baseURL`]],
+    ]),
+  );
 
   return {
     provider: parsed.provider ?? DEFAULT_CONFIG.provider,
@@ -67,10 +81,10 @@ const parseConfig = (input: ConfigInput): Config => {
     type: parsed.type ?? DEFAULT_CONFIG.type,
     maxLength: parsed.maxLength ?? DEFAULT_CONFIG.maxLength,
     maxDiffChars: parsed.maxDiffChars ?? DEFAULT_CONFIG.maxDiffChars,
-    "openai.apiKey": parsed["openai.apiKey"],
-    "openai.model": parsed["openai.model"] ?? DEFAULT_CONFIG["openai.model"],
-    "anthropic.apiKey": parsed["anthropic.apiKey"],
-    "anthropic.model": parsed["anthropic.model"] ?? DEFAULT_CONFIG["anthropic.model"],
+    ...(providerConfig as Omit<
+      Config,
+      "provider" | "locale" | "type" | "maxLength" | "maxDiffChars"
+    >),
   };
 };
 
@@ -92,7 +106,7 @@ const readConfigFile = async (): Promise<ConfigInput> => {
     for (const key of Object.keys(parsed)) {
       if (!isConfigKey(key)) {
         throw new KnownError(
-          `Invalid config key "${key}" in ${configPath}. Supported keys: ${Object.keys(DEFAULT_CONFIG).join(", ")}.`,
+          `Invalid config key "${key}" in ${configPath}. Supported keys: ${CONFIG_KEYS.join(", ")}.`,
         );
       }
     }

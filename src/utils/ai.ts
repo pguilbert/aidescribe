@@ -1,7 +1,13 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createMistral } from "@ai-sdk/mistral";
 import { generateText } from "ai";
-import { type Config, getActiveProviderConfig } from "./config-types.js";
+import {
+  type AiProvider,
+  type Config,
+  getActiveProviderConfig,
+  getProviderConfig,
+} from "./config-types.js";
 import { KnownError } from "./error.js";
 import { generatePrompt } from "./prompt.js";
 
@@ -10,21 +16,32 @@ type GenerateDescriptionOptions = {
   currentDescriptions?: string[];
 };
 
+const PROVIDER_DETAILS: Record<AiProvider, { defaultBaseURL: string; apiMode: string }> = {
+  openai: {
+    defaultBaseURL: "https://api.openai.com/v1",
+    apiMode: "openai-default",
+  },
+  anthropic: {
+    defaultBaseURL: "https://api.anthropic.com/v1",
+    apiMode: "anthropic-messages",
+  },
+  mistral: {
+    defaultBaseURL: "https://api.mistral.ai/v1",
+    apiMode: "mistral-chat",
+  },
+};
+
 const printVerbosePayload = (config: Config, systemPrompt: string, prompt: string) => {
-  const model = getActiveProviderConfig(config).model;
+  const activeProvider = getActiveProviderConfig(config);
+  const providerDetails = PROVIDER_DETAILS[config.provider];
   const lines = [
     "[aidescribe] AI request payload",
     `provider=${config.provider}`,
-    `model=${model}`,
+    `model=${activeProvider.model}`,
   ];
 
-  if (config.provider === "openai") {
-    lines.push("baseURL=https://api.openai.com/v1");
-    lines.push("apiMode=openai-default");
-  } else {
-    lines.push("baseURL=https://api.anthropic.com/v1");
-    lines.push("apiMode=anthropic-messages");
-  }
+  lines.push(`baseURL=${activeProvider.baseURL ?? providerDetails.defaultBaseURL}`);
+  lines.push(`apiMode=${providerDetails.apiMode}`);
 
   lines.push("", "[system]", systemPrompt, "", "[prompt]", prompt, "");
   process.stderr.write(`${lines.join("\n")}\n`);
@@ -55,10 +72,25 @@ type ProviderResult = {
 };
 
 const resolveModel = (config: Config) => {
-  const { apiKey, model } = getActiveProviderConfig(config);
-  const provider =
-    config.provider === "openai" ? createOpenAI({ apiKey }) : createAnthropic({ apiKey });
-  return provider(model);
+  const activeProvider = getProviderConfig(config, config.provider);
+
+  switch (config.provider) {
+    case "openai":
+      return createOpenAI({
+        apiKey: activeProvider.apiKey,
+        baseURL: activeProvider.baseURL,
+      })(activeProvider.model);
+    case "anthropic":
+      return createAnthropic({
+        apiKey: activeProvider.apiKey,
+        baseURL: activeProvider.baseURL,
+      })(activeProvider.model);
+    case "mistral":
+      return createMistral({
+        apiKey: activeProvider.apiKey,
+        baseURL: activeProvider.baseURL,
+      })(activeProvider.model);
+  }
 };
 
 const generateWithProvider = async (
