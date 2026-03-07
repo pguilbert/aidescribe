@@ -1,9 +1,9 @@
-import { getProviderDefaultModel, PROVIDER_IDS, type AiProvider } from "./providers.js";
+import { getProviderDefaultCommand, PROVIDER_IDS, type AiProvider } from "./providers.js";
 
 export { PROVIDER_IDS, type AiProvider };
 export type CommitType = "conventional" | "plain";
 
-export const PROVIDER_CONFIG_KEY_TYPES = ["apiKey", "model", "baseURL"] as const;
+export const PROVIDER_CONFIG_KEY_TYPES = ["model", "agent", "command"] as const;
 export type ProviderConfigKeyType = (typeof PROVIDER_CONFIG_KEY_TYPES)[number];
 type ProviderConfigKey = `providers.${AiProvider}.${ProviderConfigKeyType}`;
 
@@ -20,14 +20,12 @@ const PROVIDER_CONFIG_KEYS = PROVIDER_IDS.flatMap((provider) =>
 );
 
 export const DEFAULT_CONFIG: Config = {
-  provider: "openai",
+  provider: "opencode",
   locale: "en",
   type: "conventional",
   maxLength: 72,
   maxDiffChars: 40_000,
-  "providers.openai.model": getProviderDefaultModel("openai"),
-  "providers.anthropic.model": getProviderDefaultModel("anthropic"),
-  "providers.mistral.model": getProviderDefaultModel("mistral"),
+  "providers.opencode.command": getProviderDefaultCommand("opencode"),
 };
 
 export const CONFIG_KEYS: readonly ConfigKey[] = [
@@ -45,14 +43,11 @@ export type Config = {
   type: CommitType;
   maxLength: number;
   maxDiffChars: number;
-} & Record<`providers.${AiProvider}.model`, string> &
-  Partial<Record<`providers.${AiProvider}.apiKey` | `providers.${AiProvider}.baseURL`, string>>;
+} & Partial<Record<`providers.${AiProvider}.${ProviderConfigKeyType}`, string>>;
 
 export type ConfigInput = Partial<Record<ConfigKey, unknown>>;
 
-export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = PROVIDER_IDS.map(
-  (provider) => `providers.${provider}.apiKey` as ConfigKey,
-);
+export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = [];
 
 export type ProviderAliasKey = ProviderConfigKeyType;
 
@@ -67,9 +62,9 @@ export const isConfigKey = (value: string): value is ConfigKey =>
 
 export const getProviderConfig = (config: Config, provider: AiProvider) => ({
   provider,
-  apiKey: config[`providers.${provider}.apiKey`],
   model: config[`providers.${provider}.model`],
-  baseURL: config[`providers.${provider}.baseURL`],
+  agent: config[`providers.${provider}.agent`],
+  command: config[`providers.${provider}.command`],
 });
 
 export const getActiveProviderConfig = (config: Config) =>

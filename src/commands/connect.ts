@@ -1,4 +1,4 @@
-import { cancel, intro, isCancel, outro, password, text, select } from "@clack/prompts";
+import { cancel, intro, isCancel, outro, text, select } from "@clack/prompts";
 import { command } from "cleye";
 import { type AiProvider, PROVIDER_IDS, getProviderConfig } from "../utils/config-types.js";
 import { getConfig, setConfigs } from "../utils/config-runtime.js";
@@ -24,7 +24,7 @@ export const runConnectWizard = async () => {
       return {
         value: provider,
         label: definition.label,
-        hint: definition.defaultModel,
+        hint: definition.defaultCommand,
       };
     }),
   });
@@ -37,31 +37,23 @@ export const runConnectWizard = async () => {
   const provider = providerChoice as AiProvider;
   const providerDefinition = getProviderDefinition(provider);
   const existingProviderConfig = getProviderConfig(currentConfig, provider);
-  const hasExistingApiKey = Boolean(existingProviderConfig.apiKey);
-  const existingModel = existingProviderConfig.model;
 
-  const apiKeyInput = await password({
-    message: hasExistingApiKey
-      ? `Enter ${providerDefinition.label} API key (press enter to keep existing)`
-      : `Enter ${providerDefinition.label} API key`,
-    validate: (value) => {
-      if (hasExistingApiKey && !value?.trim()) {
-        return undefined;
-      }
-      return validateRequired(value, "API key");
-    },
+  const commandInput = await text({
+    message: "Provider command",
+    placeholder: providerDefinition.defaultCommand,
+    initialValue: existingProviderConfig.command ?? providerDefinition.defaultCommand,
+    validate: (value) => validateRequired(value, "Provider command"),
   });
 
-  if (isCancel(apiKeyInput)) {
+  if (isCancel(commandInput)) {
     cancel("Cancelled");
     return false;
   }
 
   const modelInput = await text({
-    message: "Model",
-    placeholder: providerDefinition.defaultModel,
-    initialValue: existingModel,
-    validate: (value) => validateRequired(value, "Model"),
+    message: "Model (optional)",
+    placeholder: "provider default",
+    initialValue: existingProviderConfig.model,
   });
 
   if (isCancel(modelInput)) {
@@ -69,30 +61,42 @@ export const runConnectWizard = async () => {
     return false;
   }
 
-  const apiKey = toTrimmedPromptValue(apiKeyInput);
-  const model = toTrimmedPromptValue(modelInput);
+  const agentInput = await text({
+    message: "Agent (optional)",
+    placeholder: "default",
+    initialValue: existingProviderConfig.agent,
+  });
 
-  if (!apiKey && !hasExistingApiKey) {
-    throw new KnownError("API key is required for first-time provider setup.");
+  if (isCancel(agentInput)) {
+    cancel("Cancelled");
+    return false;
   }
 
-  if (!model) {
-    throw new KnownError("Model is required.");
+  const commandValue = toTrimmedPromptValue(commandInput);
+  const modelValue = toTrimmedPromptValue(modelInput);
+  const agentValue = toTrimmedPromptValue(agentInput);
+
+  if (!commandValue) {
+    throw new KnownError("Provider command is required.");
   }
 
   const keyValues: [string, string][] = [["provider", provider]];
 
-  if (apiKey) {
-    keyValues.push([`providers.${provider}.apiKey`, apiKey]);
+  if (commandValue !== (existingProviderConfig.command ?? providerDefinition.defaultCommand)) {
+    keyValues.push([`providers.${provider}.command`, commandValue]);
   }
 
-  if (model !== existingModel) {
-    keyValues.push([`providers.${provider}.model`, model]);
+  if (modelValue !== (existingProviderConfig.model ?? "")) {
+    keyValues.push([`providers.${provider}.model`, modelValue]);
+  }
+
+  if (agentValue !== (existingProviderConfig.agent ?? "")) {
+    keyValues.push([`providers.${provider}.agent`, agentValue]);
   }
 
   await setConfigs(keyValues);
 
-  outro(`Connected ${providerDefinition.label}. Active model: ${model}`);
+  outro(`Connected ${providerDefinition.label}. Model: ${modelValue || "provider default"}`);
   return true;
 };
 

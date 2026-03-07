@@ -27,9 +27,9 @@ const maskValue = (key: ConfigKey, value: unknown) => {
 const providerOutputKeys = PROVIDER_IDS.flatMap(
   (provider) =>
     [
-      `providers.${provider}.apiKey`,
+      `providers.${provider}.command`,
       `providers.${provider}.model`,
-      `providers.${provider}.baseURL`,
+      `providers.${provider}.agent`,
     ] as ConfigKey[],
 );
 

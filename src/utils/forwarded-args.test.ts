@@ -12,7 +12,7 @@ describe("getForwardedJjDescribeArgs", () => {
   });
 
   it("strips --ai-provider with next-arg value", () => {
-    expect(getForwardedJjDescribeArgs(["--ai-provider", "openai", "-r", "abc"])).toEqual([
+    expect(getForwardedJjDescribeArgs(["--ai-provider", "opencode", "-r", "abc"])).toEqual([
       "-r",
       "abc",
     ]);
@@ -35,7 +35,7 @@ describe("getForwardedJjDescribeArgs", () => {
   });
 
   it("strips --ai-provider=value (equals syntax)", () => {
-    expect(getForwardedJjDescribeArgs(["--ai-provider=openai", "-r", "abc"])).toEqual([
+    expect(getForwardedJjDescribeArgs(["--ai-provider=opencode", "-r", "abc"])).toEqual([
       "-r",
       "abc",
     ]);
@@ -47,7 +47,7 @@ describe("getForwardedJjDescribeArgs", () => {
 
   it("forwards everything after -- separator", () => {
     expect(
-      getForwardedJjDescribeArgs(["--ai-provider", "openai", "--", "--verbose", "--ai-type"]),
+      getForwardedJjDescribeArgs(["--ai-provider", "opencode", "--", "--verbose", "--ai-type"]),
     ).toEqual(["--verbose", "--ai-type"]);
   });
 });

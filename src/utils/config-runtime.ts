@@ -15,9 +15,17 @@ import {
   type ConfigInput,
   isConfigKey,
 } from "./config-types.js";
-import { getProviderDefaultModel } from "./providers.js";
+import { getProviderDefaultCommand, getProviderDefaultModel } from "./providers.js";
 
 export const getConfigPath = () => path.join(os.homedir(), ".aidescribe.json");
+
+const LEGACY_PROVIDER_IDS = ["openai", "anthropic", "mistral"] as const;
+const LEGACY_PROVIDER_CONFIG_KEYS = LEGACY_PROVIDER_IDS.flatMap((provider) => [
+  `providers.${provider}.apiKey`,
+  `providers.${provider}.model`,
+  `providers.${provider}.baseURL`,
+]);
+const LEGACY_CONFIG_KEYS = new Set<string>(LEGACY_PROVIDER_CONFIG_KEYS);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -29,9 +37,9 @@ const nonEmptyTrimmedString = z
 
 const providerSchemaShape = Object.fromEntries(
   PROVIDER_IDS.flatMap((provider) => [
-    [`providers.${provider}.apiKey`, nonEmptyTrimmedString.optional()],
     [`providers.${provider}.model`, nonEmptyTrimmedString.optional()],
-    [`providers.${provider}.baseURL`, nonEmptyTrimmedString.optional()],
+    [`providers.${provider}.agent`, nonEmptyTrimmedString.optional()],
+    [`providers.${provider}.command`, nonEmptyTrimmedString.optional()],
   ]),
 );
 
@@ -63,19 +71,30 @@ const configSchema = z.object({
 });
 
 const parseConfig = (input: ConfigInput): Config => {
-  const lenient = configSchema.safeParse(input);
+  const sanitizedInput: ConfigInput = { ...input };
+  if (typeof sanitizedInput.provider === "string") {
+    const normalizedProvider = sanitizedInput.provider.trim().toLowerCase();
+    if (!PROVIDER_IDS.includes(normalizedProvider as AiProvider)) {
+      delete sanitizedInput.provider;
+    }
+  }
+
+  const lenient = configSchema.safeParse(sanitizedInput);
   const parsed = lenient.success ? lenient.data : {};
   const parsedRecord = parsed as Record<string, unknown>;
 
   const providerConfig = Object.fromEntries(
-    PROVIDER_IDS.flatMap((provider) => [
-      [
-        `providers.${provider}.model`,
-        parsedRecord[`providers.${provider}.model`] ?? getProviderDefaultModel(provider),
-      ],
-      [`providers.${provider}.apiKey`, parsedRecord[`providers.${provider}.apiKey`]],
-      [`providers.${provider}.baseURL`, parsedRecord[`providers.${provider}.baseURL`]],
-    ]),
+    PROVIDER_IDS.flatMap((provider) => {
+      const modelKey = `providers.${provider}.model`;
+      const commandKey = `providers.${provider}.command`;
+      const defaultModel = getProviderDefaultModel(provider);
+
+      return [
+        [modelKey, parsedRecord[modelKey] ?? defaultModel],
+        [`providers.${provider}.agent`, parsedRecord[`providers.${provider}.agent`]],
+        [commandKey, parsedRecord[commandKey] ?? getProviderDefaultCommand(provider)],
+      ];
+    }),
   );
 
   return {
@@ -107,7 +126,7 @@ const readConfigFile = async (): Promise<ConfigInput> => {
     }
 
     for (const key of Object.keys(parsed)) {
-      if (!isConfigKey(key)) {
+      if (!isConfigKey(key) && !LEGACY_CONFIG_KEYS.has(key)) {
         throw new KnownError(
           `Invalid config key "${key}" in ${configPath}. Supported keys: ${CONFIG_KEYS.join(", ")}.`,
         );
@@ -186,9 +205,9 @@ const normalizeProvider = (value: unknown): AiProvider | null => {
 const normalizeConfigValue = (key: string, value: string) => {
   if (
     key === "provider" ||
-    key.endsWith(".apiKey") ||
     key.endsWith(".model") ||
-    key.endsWith(".baseURL")
+    key.endsWith(".agent") ||
+    key.endsWith(".command")
   ) {
     return value.trim();
   }

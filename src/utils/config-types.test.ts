@@ -11,96 +11,49 @@ describe("isConfigKey", () => {
   it("returns true for valid config keys", () => {
     expect(isConfigKey("provider")).toBe(true);
     expect(isConfigKey("locale")).toBe(true);
-    expect(isConfigKey("providers.openai.apiKey")).toBe(true);
-    expect(isConfigKey("providers.anthropic.model")).toBe(true);
-    expect(isConfigKey("providers.mistral.baseURL")).toBe(true);
+    expect(isConfigKey("providers.opencode.command")).toBe(true);
+    expect(isConfigKey("providers.opencode.model")).toBe(true);
+    expect(isConfigKey("providers.opencode.agent")).toBe(true);
   });
 
   it("returns false for invalid keys", () => {
     expect(isConfigKey("invalid")).toBe(false);
     expect(isConfigKey("")).toBe(false);
-    expect(isConfigKey("providers.openai.invalid")).toBe(false);
+    expect(isConfigKey("providers.openai.apiKey")).toBe(false);
   });
 });
 
 describe("provider key aliases", () => {
   it("identifies supported alias keys", () => {
-    expect(isProviderAliasKey("apiKey")).toBe(true);
     expect(isProviderAliasKey("model")).toBe(true);
-    expect(isProviderAliasKey("baseURL")).toBe(true);
-    expect(isProviderAliasKey("unknown")).toBe(false);
+    expect(isProviderAliasKey("agent")).toBe(true);
+    expect(isProviderAliasKey("command")).toBe(true);
+    expect(isProviderAliasKey("apiKey")).toBe(false);
   });
 
   it("maps alias to provider-scoped config key", () => {
-    expect(toProviderConfigKey("mistral", "apiKey")).toBe("providers.mistral.apiKey");
+    expect(toProviderConfigKey("opencode", "model")).toBe("providers.opencode.model");
   });
 });
 
 describe("getActiveProviderConfig", () => {
-  it("returns openai config when provider is openai", () => {
+  it("returns opencode config when provider is opencode", () => {
     const config: Config = {
-      provider: "openai",
+      provider: "opencode",
       locale: "en",
       type: "conventional",
       maxLength: 72,
       maxDiffChars: 40_000,
-      "providers.openai.apiKey": "sk-openai",
-      "providers.openai.model": "gpt-5-mini",
-      "providers.anthropic.apiKey": "sk-ant",
-      "providers.anthropic.model": "claude-3-5-haiku-latest",
-      "providers.mistral.apiKey": "sk-mistral",
-      "providers.mistral.model": "mistral-small-latest",
+      "providers.opencode.command": "opencode",
+      "providers.opencode.model": "openai/gpt-5-mini",
+      "providers.opencode.agent": "default",
     };
-    expect(getActiveProviderConfig(config)).toEqual({
-      provider: "openai",
-      apiKey: "sk-openai",
-      model: "gpt-5-mini",
-      baseURL: undefined,
-    });
-  });
 
-  it("returns anthropic config when provider is anthropic", () => {
-    const config: Config = {
-      provider: "anthropic",
-      locale: "en",
-      type: "conventional",
-      maxLength: 72,
-      maxDiffChars: 40_000,
-      "providers.openai.apiKey": "sk-openai",
-      "providers.openai.model": "gpt-5-mini",
-      "providers.anthropic.apiKey": "sk-ant",
-      "providers.anthropic.model": "claude-3-5-haiku-latest",
-      "providers.mistral.apiKey": "sk-mistral",
-      "providers.mistral.model": "mistral-small-latest",
-    };
     expect(getActiveProviderConfig(config)).toEqual({
-      provider: "anthropic",
-      apiKey: "sk-ant",
-      model: "claude-3-5-haiku-latest",
-      baseURL: undefined,
-    });
-  });
-
-  it("returns mistral config when provider is mistral", () => {
-    const config: Config = {
-      provider: "mistral",
-      locale: "en",
-      type: "conventional",
-      maxLength: 72,
-      maxDiffChars: 40_000,
-      "providers.openai.apiKey": "sk-openai",
-      "providers.openai.model": "gpt-5-mini",
-      "providers.anthropic.apiKey": "sk-ant",
-      "providers.anthropic.model": "claude-3-5-haiku-latest",
-      "providers.mistral.apiKey": "sk-mistral",
-      "providers.mistral.model": "mistral-medium-latest",
-      "providers.mistral.baseURL": "https://custom.mistral/v1",
-    };
-    expect(getActiveProviderConfig(config)).toEqual({
-      provider: "mistral",
-      apiKey: "sk-mistral",
-      model: "mistral-medium-latest",
-      baseURL: "https://custom.mistral/v1",
+      provider: "opencode",
+      command: "opencode",
+      model: "openai/gpt-5-mini",
+      agent: "default",
     });
   });
 });
