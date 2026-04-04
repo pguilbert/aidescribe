@@ -70,7 +70,7 @@ describe("getActiveProviderConfig", () => {
       maxDiffChars: 40_000,
       variantCount: 1,
       "providers.openai.apiKey": "sk-openai",
-      "providers.openai.model": "gpt-5-mini",
+      "providers.openai.model": "gpt-5.4-mini",
       "providers.anthropic.apiKey": "sk-ant",
       "providers.anthropic.model": "claude-3-5-haiku-latest",
       "providers.mistral.apiKey": "sk-mistral",
