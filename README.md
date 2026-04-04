@@ -56,3 +56,31 @@ aidescribe config
 aidescribe config get provider
 aidescribe config set variantCount=3
 ```
+
+## Usage
+
+```bash
+aidescribe v0.0.4
+
+Generate jj change descriptions with AI
+
+Usage:
+  aidescribe [flags...]
+  aidescribe <command>
+
+Commands:
+  config         View or modify configuration settings
+  connect        Interactive provider setup wizard
+
+Flags:
+      --count <number>                 Generate multiple description variants for this run (default: 1)
+  -h, --help                           Show help
+      --locale <string>                Override locale for this run (default: en)
+      --max-diff-chars <number>        Max diff chars sent to AI for this run (default: 40000)
+      --max-length <number>            Max generated title length for this run (default: 72, its a soft guidance for the
+                                       model, not a local hard cutoff)
+      --provider <string>              Override provider for this run (supported: openai, anthropic, mistral)
+  -t, --type <string>                  Message format for this run (default: conventional, supports: conventional, plain)
+      --verbose                        Print the exact prompt payload sent to the AI model for this run
+      --version                        Show version
+```

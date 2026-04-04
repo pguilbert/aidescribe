@@ -1,6 +1,6 @@
 {
   "name": "aidescribe",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Generate jj change descriptions with AI",
   "keywords": [
     "ai",
