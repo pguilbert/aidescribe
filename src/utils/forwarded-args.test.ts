@@ -22,8 +22,12 @@ describe("getForwardedJjDescribeArgs", () => {
     expect(getForwardedJjDescribeArgs(["--ai-locale", "fr"])).toEqual([]);
   });
 
-  it("strips --ai-type with next-arg value", () => {
-    expect(getForwardedJjDescribeArgs(["--ai-type", "plain"])).toEqual([]);
+  it("strips --type with next-arg value", () => {
+    expect(getForwardedJjDescribeArgs(["--type", "plain"])).toEqual([]);
+  });
+
+  it("strips -t with next-arg value", () => {
+    expect(getForwardedJjDescribeArgs(["-t", "plain"])).toEqual([]);
   });
 
   it("strips --ai-max-length with next-arg value", () => {
@@ -41,13 +45,20 @@ describe("getForwardedJjDescribeArgs", () => {
     ]);
   });
 
+  it("strips --type=value (equals syntax)", () => {
+    expect(getForwardedJjDescribeArgs(["--type=plain", "-r", "abc"])).toEqual([
+      "-r",
+      "abc",
+    ]);
+  });
+
   it("strips --verbose", () => {
     expect(getForwardedJjDescribeArgs(["--verbose", "-r", "abc"])).toEqual(["-r", "abc"]);
   });
 
   it("forwards everything after -- separator", () => {
     expect(
-      getForwardedJjDescribeArgs(["--ai-provider", "openai", "--", "--verbose", "--ai-type"]),
-    ).toEqual(["--verbose", "--ai-type"]);
+      getForwardedJjDescribeArgs(["--ai-provider", "openai", "--", "--verbose", "--type"]),
+    ).toEqual(["--verbose", "--type"]);
   });
 });

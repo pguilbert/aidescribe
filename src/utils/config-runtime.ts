@@ -148,7 +148,7 @@ export const getConfig = async (options?: GetConfigOptions): Promise<Config> => 
 export type CliConfigOverrides = {
   aiProvider?: string;
   aiLocale?: string;
-  aiType?: string;
+  type?: string;
   aiMaxLength?: number;
   aiMaxDiffChars?: number;
 };

@@ -1,7 +1,8 @@
 const localFlagsWithValues = new Set([
   "--ai-provider",
   "--ai-locale",
-  "--ai-type",
+  "--type",
+  "-t",
   "--ai-max-length",
   "--ai-max-diff-chars",
 ]);

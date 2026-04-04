@@ -12,7 +12,7 @@ import { runConnectWizard } from "./connect.js";
 type MainFlags = {
   aiProvider?: string;
   aiLocale?: string;
-  aiType?: string;
+  type?: string;
   aiMaxLength?: number;
   aiMaxDiffChars?: number;
   verbose?: boolean;
@@ -41,7 +41,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     const cliConfig = {
       provider: flags.aiProvider,
       locale: flags.aiLocale,
-      type: flags.aiType,
+      type: flags.type,
       maxLength: flags.aiMaxLength,
       maxDiffChars: flags.aiMaxDiffChars,
     };

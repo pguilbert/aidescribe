@@ -23,8 +23,9 @@ cli(
         type: String,
         description: "Override locale for this run (default: en)",
       },
-      aiType: {
+      type: {
         type: String,
+        alias: "t",
         description:
           "Message format for this run (default: conventional, supports: conventional, plain)",
       },
