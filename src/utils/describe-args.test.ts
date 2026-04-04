@@ -30,10 +30,17 @@ describe("parseDescribeArgsForDiff", () => {
     });
   });
 
-  it("treats non--r flags as plain revsets", () => {
+  it("ignores non--r flags", () => {
     expect(parseDescribeArgsForDiff(["--revision", "abc", "--message", "msg"])).toEqual({
       globalArgs: [],
-      revsets: ["--revision", "abc", "--message", "msg"],
+      revsets: ["abc", "msg"],
+    });
+  });
+
+  it("ignores -- separator", () => {
+    expect(parseDescribeArgsForDiff(["--", "-r", "abc", "def"])).toEqual({
+      globalArgs: [],
+      revsets: ["abc", "def"],
     });
   });
 });

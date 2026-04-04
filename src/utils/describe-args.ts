@@ -9,6 +9,10 @@ export const parseDescribeArgsForDiff = (args: string[]): DescribeArgsForDiff =>
   for (let index = 0; index < args.length; index += 1) {
     const token = args[index];
 
+    if (token === "--") {
+      continue;
+    }
+
     if (token === "-r") {
       const value = args[index + 1];
       if (value) {
@@ -20,6 +24,10 @@ export const parseDescribeArgsForDiff = (args: string[]): DescribeArgsForDiff =>
 
     if (token.startsWith("-r") && token.length > 2) {
       revsets.push(token.slice(2));
+      continue;
+    }
+
+    if (token.startsWith("-")) {
       continue;
     }
 

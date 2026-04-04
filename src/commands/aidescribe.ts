@@ -4,7 +4,6 @@ import { getConfig } from "../utils/config-runtime.js";
 import { getActiveProviderConfig } from "../utils/config-types.js";
 import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
-import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
 import { generateDescription } from "../utils/ai.js";
 import { assertJjRepo, getCurrentDescriptions, getDiff, runJjDescribe } from "../utils/jj.js";
 import { runConnectWizard } from "./connect.js";
@@ -95,8 +94,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
       );
     }
 
-    const forwardedArgs = getForwardedJjDescribeArgs(rawArgv);
-    const diffArgs = parseDescribeArgsForDiff(forwardedArgs);
+    const diffArgs = parseDescribeArgsForDiff(rawArgv);
 
     verbose?.start("Reading `jj diff`");
     const diff = await getDiff(diffArgs);
@@ -136,7 +134,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     const finalMessage = reviewed;
 
     verbose?.start("Running `jj describe`");
-    await runJjDescribe(finalMessage, forwardedArgs);
+    await runJjDescribe(finalMessage, diffArgs.revsets);
     verbose?.stop("Description applied");
 
     outro("Done");
