@@ -59,7 +59,7 @@ aidescribe config set variantCount=3
 
 ## Usage
 
-```bash
+```
 aidescribe v0.0.4
 
 Generate jj change descriptions with AI
