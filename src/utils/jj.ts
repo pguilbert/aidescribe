@@ -1,4 +1,4 @@
-import { execa } from "execa";
+import { x } from "tinyexec";
 import { KnownError } from "./error.js";
 
 type JjTargetOptions = {
@@ -29,8 +29,8 @@ const buildBaseJjArgs = (globalArgs: string[]) => {
 };
 
 export const assertJjRepo = async () => {
-  const result = await execa("jj", ["root"], { reject: false });
-  if (result.failed) {
+  const result = await x("jj", ["root"]);
+  if (result.exitCode !== 0) {
     throw new KnownError("The current directory must be inside a jj repository.");
   }
 };
@@ -46,7 +46,7 @@ export const getDiff = async (options?: JjTargetOptions) => {
     args.push("--revisions", getTargetRevsetExpression(revsets));
   }
 
-  const { stdout } = await execa("jj", args);
+  const { stdout } = await x("jj", args, { throwOnError: true });
   return stdout.trim();
 };
 
@@ -64,7 +64,7 @@ export const getCurrentDescriptions = async (options?: JjTargetOptions) => {
     'description.first_line() ++ "\\n"',
   );
 
-  const { stdout } = await execa("jj", args);
+  const { stdout } = await x("jj", args, { throwOnError: true });
   const descriptions = stdout
     .split("\n")
     .map((line) => line.trim())
@@ -74,7 +74,10 @@ export const getCurrentDescriptions = async (options?: JjTargetOptions) => {
 };
 
 export const runJjDescribe = async (message: string, args: string[]) => {
-  await execa("jj", ["describe", "-m", message, ...args], {
-    stdio: "inherit",
+  await x("jj", ["describe", "-m", message, ...args], {
+    nodeOptions: {
+      stdio: "inherit",
+    },
+    throwOnError: true,
   });
 };

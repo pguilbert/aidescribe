@@ -46,7 +46,7 @@
     "@clack/prompts": "^1.2.0",
     "ai": "^6.0.146",
     "cleye": "^2.3.0",
-    "execa": "^9.6.1",
+    "tinyexec": "^1.0.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
