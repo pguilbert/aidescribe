@@ -59,6 +59,10 @@ const configSchema = z.object({
     .union([z.number(), z.string().transform((s) => Number(s.trim()))])
     .pipe(z.number().int().positive({ message: "must be a positive integer" }))
     .optional(),
+  variantCount: z
+    .union([z.number(), z.string().transform((s) => Number(s.trim()))])
+    .pipe(z.number().int().positive({ message: "must be a positive integer" }))
+    .optional(),
   ...providerSchemaShape,
 });
 
@@ -84,9 +88,10 @@ const parseConfig = (input: ConfigInput): Config => {
     type: parsed.type ?? DEFAULT_CONFIG.type,
     maxLength: parsed.maxLength ?? DEFAULT_CONFIG.maxLength,
     maxDiffChars: parsed.maxDiffChars ?? DEFAULT_CONFIG.maxDiffChars,
+    variantCount: parsed.variantCount ?? DEFAULT_CONFIG.variantCount,
     ...(providerConfig as Omit<
       Config,
-      "provider" | "locale" | "type" | "maxLength" | "maxDiffChars"
+      "provider" | "locale" | "type" | "maxLength" | "maxDiffChars" | "variantCount"
     >),
   };
 };
@@ -151,6 +156,7 @@ export type CliConfigOverrides = {
   type?: string;
   aiMaxLength?: number;
   aiMaxDiffChars?: number;
+  count?: number;
 };
 
 const validateConfig = (config: Record<string, unknown>) => {

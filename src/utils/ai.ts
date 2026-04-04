@@ -42,6 +42,9 @@ const printVerboseResponse = (rawText: string, finishReason: string, warnings: u
 const truncateToLength = (message: string, maxLength: number) =>
   message.length > maxLength ? message.slice(0, maxLength).trim() : message;
 
+const normalizeDescription = (message: string, maxLength: number) =>
+  truncateToLength(message.trim(), maxLength);
+
 type ProviderResult = {
   rawText: string;
   finishReason: string;
@@ -79,6 +82,43 @@ const generateWithProvider = async (
   };
 };
 
+const generateSingleDescription = async (
+  diffForModel: string,
+  config: Config,
+  systemPrompt: string,
+  verbose?: boolean,
+) => {
+  const activeProvider = getActiveProviderConfig(config);
+
+  let providerResult: ProviderResult;
+  try {
+    providerResult = await generateWithProvider(diffForModel, config, systemPrompt);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new KnownError(
+      `AI request failed for provider "${config.provider}" (model "${activeProvider.model}"): ${message}`,
+    );
+  }
+
+  if (verbose) {
+    printVerboseResponse(
+      providerResult.rawText,
+      providerResult.finishReason,
+      providerResult.warnings,
+    );
+  }
+
+  const message = normalizeDescription(providerResult.rawText, config.maxLength);
+
+  if (!message) {
+    throw new KnownError(
+      `AI returned an empty description (finishReason=${providerResult.finishReason}). Re-run with --verbose to inspect provider output.`,
+    );
+  }
+
+  return message;
+};
+
 export const generateDescription = async (
   diff: string,
   config: Config,
@@ -105,31 +145,11 @@ export const generateDescription = async (
     printVerbosePayload(config, systemPrompt, diffForModel);
   }
 
-  let providerResult: ProviderResult;
-  try {
-    providerResult = await generateWithProvider(diffForModel, config, systemPrompt);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new KnownError(
-      `AI request failed for provider "${config.provider}" (model "${activeProvider.model}"): ${message}`,
-    );
-  }
+  const generated = await Promise.all(
+    Array.from({ length: config.variantCount }, () =>
+      generateSingleDescription(diffForModel, config, systemPrompt, options?.verbose),
+    ),
+  );
 
-  if (options?.verbose) {
-    printVerboseResponse(
-      providerResult.rawText,
-      providerResult.finishReason,
-      providerResult.warnings,
-    );
-  }
-
-  const message = providerResult.rawText.trim();
-
-  if (!message) {
-    throw new KnownError(
-      `AI returned an empty description (finishReason=${providerResult.finishReason}). Re-run with --verbose to inspect provider output.`,
-    );
-  }
-
-  return truncateToLength(message, config.maxLength);
+  return [...new Set(generated)];
 };

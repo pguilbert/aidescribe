@@ -51,4 +51,5 @@ View config:
 ```bash
 aidescribe config
 aidescribe config get provider
+aidescribe config set variantCount=3
 ```

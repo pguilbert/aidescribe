@@ -46,10 +46,7 @@ describe("getForwardedJjDescribeArgs", () => {
   });
 
   it("strips --type=value (equals syntax)", () => {
-    expect(getForwardedJjDescribeArgs(["--type=plain", "-r", "abc"])).toEqual([
-      "-r",
-      "abc",
-    ]);
+    expect(getForwardedJjDescribeArgs(["--type=plain", "-r", "abc"])).toEqual(["-r", "abc"]);
   });
 
   it("strips --verbose", () => {

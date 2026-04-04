@@ -13,6 +13,7 @@ export type ConfigKey =
   | "type"
   | "maxLength"
   | "maxDiffChars"
+  | "variantCount"
   | ProviderConfigKey;
 
 const PROVIDER_CONFIG_KEYS = PROVIDER_IDS.flatMap((provider) =>
@@ -25,6 +26,7 @@ export const DEFAULT_CONFIG: Config = {
   type: "conventional",
   maxLength: 72,
   maxDiffChars: 40_000,
+  variantCount: 1,
   "providers.openai.model": getProviderDefaultModel("openai"),
   "providers.anthropic.model": getProviderDefaultModel("anthropic"),
   "providers.mistral.model": getProviderDefaultModel("mistral"),
@@ -36,6 +38,7 @@ export const CONFIG_KEYS: readonly ConfigKey[] = [
   "type",
   "maxLength",
   "maxDiffChars",
+  "variantCount",
   ...PROVIDER_CONFIG_KEYS,
 ];
 
@@ -45,6 +48,7 @@ export type Config = {
   type: CommitType;
   maxLength: number;
   maxDiffChars: number;
+  variantCount: number;
 } & Record<`providers.${AiProvider}.model`, string> &
   Partial<Record<`providers.${AiProvider}.apiKey` | `providers.${AiProvider}.baseURL`, string>>;
 

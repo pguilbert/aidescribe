@@ -1,7 +1,7 @@
-import { cancel, intro, isCancel, outro, spinner, text } from "@clack/prompts";
+import { cancel, intro, isCancel, outro, select, spinner, text } from "@clack/prompts";
 import { bgLightRed, black } from "kolorist";
 import { getConfig } from "../utils/config-runtime.js";
-import { getActiveProviderConfig, getProviderConfig, PROVIDER_IDS } from "../utils/config-types.js";
+import { getActiveProviderConfig } from "../utils/config-types.js";
 import { parseDescribeArgsForDiff } from "../utils/describe-args.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { getForwardedJjDescribeArgs } from "../utils/forwarded-args.js";
@@ -15,7 +15,25 @@ type MainFlags = {
   type?: string;
   aiMaxLength?: number;
   aiMaxDiffChars?: number;
+  count?: number;
   verbose?: boolean;
+};
+
+const chooseDescription = async (generated: string[]) => {
+  if (generated.length <= 1) {
+    return generated[0] ?? null;
+  }
+
+  const selected = await select({
+    message: "Choose a description",
+    options: generated.map((value) => ({ value, label: value })),
+  });
+
+  if (isCancel(selected)) {
+    return null;
+  }
+
+  return String(selected);
 };
 
 const reviewDescription = async (generated: string) => {
@@ -44,6 +62,7 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
       type: flags.type,
       maxLength: flags.aiMaxLength,
       maxDiffChars: flags.aiMaxDiffChars,
+      variantCount: flags.count,
     };
 
     intro(bgLightRed(black(" aidescribe ✨ ")));
@@ -103,7 +122,13 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     });
     defaultSpinner.stop("Description generated");
 
-    const reviewed = await reviewDescription(generated);
+    const selected = await chooseDescription(generated);
+    if (!selected) {
+      cancel("Cancelled");
+      return;
+    }
+
+    const reviewed = await reviewDescription(selected);
     if (!reviewed) {
       cancel("Cancelled");
       return;

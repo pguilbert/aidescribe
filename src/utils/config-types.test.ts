@@ -11,6 +11,7 @@ describe("isConfigKey", () => {
   it("returns true for valid config keys", () => {
     expect(isConfigKey("provider")).toBe(true);
     expect(isConfigKey("locale")).toBe(true);
+    expect(isConfigKey("variantCount")).toBe(true);
     expect(isConfigKey("providers.openai.apiKey")).toBe(true);
     expect(isConfigKey("providers.anthropic.model")).toBe(true);
     expect(isConfigKey("providers.mistral.baseURL")).toBe(true);
@@ -44,6 +45,7 @@ describe("getActiveProviderConfig", () => {
       type: "conventional",
       maxLength: 72,
       maxDiffChars: 40_000,
+      variantCount: 1,
       "providers.openai.apiKey": "sk-openai",
       "providers.openai.model": "gpt-5-mini",
       "providers.anthropic.apiKey": "sk-ant",
@@ -66,6 +68,7 @@ describe("getActiveProviderConfig", () => {
       type: "conventional",
       maxLength: 72,
       maxDiffChars: 40_000,
+      variantCount: 1,
       "providers.openai.apiKey": "sk-openai",
       "providers.openai.model": "gpt-5-mini",
       "providers.anthropic.apiKey": "sk-ant",
@@ -88,6 +91,7 @@ describe("getActiveProviderConfig", () => {
       type: "conventional",
       maxLength: 72,
       maxDiffChars: 40_000,
+      variantCount: 1,
       "providers.openai.apiKey": "sk-openai",
       "providers.openai.model": "gpt-5-mini",
       "providers.anthropic.apiKey": "sk-ant",

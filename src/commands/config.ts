@@ -40,6 +40,7 @@ const CONFIG_OUTPUT_KEYS: ConfigKey[] = [
   "type",
   "maxLength",
   "maxDiffChars",
+  "variantCount",
 ];
 
 const getConfigValue = (config: Config, key: ConfigKey) => config[key];
