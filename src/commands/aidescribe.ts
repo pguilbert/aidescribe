@@ -9,11 +9,11 @@ import { assertJjRepo, getCurrentDescriptions, getDiff, runJjDescribe } from "..
 import { runConnectWizard } from "./connect.js";
 
 type MainFlags = {
-  aiProvider?: string;
-  aiLocale?: string;
+  provider?: string;
+  locale?: string;
   type?: string;
-  aiMaxLength?: number;
-  aiMaxDiffChars?: number;
+  maxLength?: number;
+  maxDiffChars?: number;
   count?: number;
   verbose?: boolean;
 };
@@ -56,11 +56,11 @@ export default async (flags: MainFlags, rawArgv: string[]) =>
     const defaultSpinner = spinner();
     const verbose = flags.verbose ? spinner() : null;
     const cliConfig = {
-      provider: flags.aiProvider,
-      locale: flags.aiLocale,
+      provider: flags.provider,
+      locale: flags.locale,
       type: flags.type,
-      maxLength: flags.aiMaxLength,
-      maxDiffChars: flags.aiMaxDiffChars,
+      maxLength: flags.maxLength,
+      maxDiffChars: flags.maxDiffChars,
       variantCount: flags.count,
     };
 

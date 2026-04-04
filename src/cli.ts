@@ -15,11 +15,11 @@ cli(
     name: "aidescribe",
     version,
     flags: {
-      aiProvider: {
+      provider: {
         type: String,
         description: "Override provider for this run (supported: openai, anthropic, mistral)",
       },
-      aiLocale: {
+      locale: {
         type: String,
         description: "Override locale for this run (default: en)",
       },
@@ -29,11 +29,11 @@ cli(
         description:
           "Message format for this run (default: conventional, supports: conventional, plain)",
       },
-      aiMaxLength: {
+      maxLength: {
         type: Number,
         description: "Max generated title length for this run (default: 72)",
       },
-      aiMaxDiffChars: {
+      maxDiffChars: {
         type: Number,
         description: "Max diff chars sent to AI for this run (default: 40000)",
       },
