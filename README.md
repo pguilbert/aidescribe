@@ -21,12 +21,15 @@ pnpm add -g aidescribe
 Generate a description:
 
 ```bash
-# same arguments as `jj describe`
-# aidescribe <REVSETS>
+# supported `jj` target arguments
 aidescribe
+aidescribe <REVSETS>
 aidescribe -r @-
 aidescribe -r abc123
+aidescribe -rabc123
 ```
+
+Only inlined `<REVSETS>` and `-r` are forwarded to `jj`.
 
 ## Requirements
 

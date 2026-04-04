@@ -23,105 +23,17 @@ describe("parseDescribeArgsForDiff", () => {
     });
   });
 
-  it("parses --revision flag", () => {
-    expect(parseDescribeArgsForDiff(["--revision", "abc"])).toEqual({
+  it("supports mixing -r forms with positional revsets", () => {
+    expect(parseDescribeArgsForDiff(["-r", "abc", "def", "-rghi"])).toEqual({
       globalArgs: [],
-      revsets: ["abc"],
+      revsets: ["abc", "def", "ghi"],
     });
   });
 
-  it("parses --revisions flag", () => {
-    expect(parseDescribeArgsForDiff(["--revisions", "abc"])).toEqual({
+  it("treats non--r flags as plain revsets", () => {
+    expect(parseDescribeArgsForDiff(["--revision", "abc", "--message", "msg"])).toEqual({
       globalArgs: [],
-      revsets: ["abc"],
-    });
-  });
-
-  it("parses --revision=value (equals syntax)", () => {
-    expect(parseDescribeArgsForDiff(["--revision=abc"])).toEqual({
-      globalArgs: [],
-      revsets: ["abc"],
-    });
-  });
-
-  it("collects global flags: -R with value", () => {
-    expect(parseDescribeArgsForDiff(["-R", "/repo"])).toEqual({
-      globalArgs: ["-R", "/repo"],
-      revsets: [],
-    });
-  });
-
-  it("collects global flags: -R with value stuck together", () => {
-    expect(parseDescribeArgsForDiff(["-R/repo"])).toEqual({
-      globalArgs: ["-R", "/repo"],
-      revsets: [],
-    });
-  });
-
-  it("collects global flags: --ignore-working-copy", () => {
-    expect(parseDescribeArgsForDiff(["--ignore-working-copy"])).toEqual({
-      globalArgs: ["--ignore-working-copy"],
-      revsets: [],
-    });
-  });
-
-  it("collects global flags: --color=auto (equals syntax)", () => {
-    expect(parseDescribeArgsForDiff(["--color=auto"])).toEqual({
-      globalArgs: ["--color=auto"],
-      revsets: [],
-    });
-  });
-
-  it("skips describe flag -m with value", () => {
-    expect(parseDescribeArgsForDiff(["-m", "msg"])).toEqual({
-      globalArgs: [],
-      revsets: [],
-    });
-  });
-
-  it("skips describe flag -m with value stuck together", () => {
-    expect(parseDescribeArgsForDiff(["-mfoo"])).toEqual({
-      globalArgs: [],
-      revsets: [],
-    });
-  });
-
-  it("skips describe flag --message with value", () => {
-    expect(parseDescribeArgsForDiff(["--message", "msg"])).toEqual({
-      globalArgs: [],
-      revsets: [],
-    });
-  });
-
-  it("skips describe boolean flag --stdin", () => {
-    expect(parseDescribeArgsForDiff(["--stdin"])).toEqual({
-      globalArgs: [],
-      revsets: [],
-    });
-  });
-
-  it("treats everything after -- as revsets", () => {
-    expect(parseDescribeArgsForDiff(["--", "abc", "--message", "def"])).toEqual({
-      globalArgs: [],
-      revsets: ["abc", "--message", "def"],
-    });
-  });
-
-  it("handles a complex mixed case", () => {
-    expect(
-      parseDescribeArgsForDiff([
-        "-R",
-        "/repo",
-        "--ignore-working-copy",
-        "-r",
-        "abc",
-        "-m",
-        "msg",
-        "def",
-      ]),
-    ).toEqual({
-      globalArgs: ["-R", "/repo", "--ignore-working-copy"],
-      revsets: ["abc", "def"],
+      revsets: ["--revision", "abc", "--message", "msg"],
     });
   });
 });
