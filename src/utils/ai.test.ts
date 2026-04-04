@@ -68,4 +68,13 @@ describe("generateDescription", () => {
       generateDescription("diff", { ...config, variantCount: 1 }),
     ).rejects.toBeInstanceOf(KnownError);
   });
+
+  it("does not truncate responses longer than maxLength", async () => {
+    const longText = "feat: add a much longer description than the configured max length allows";
+    generateTextMock.mockResolvedValue({ text: longText, finishReason: "stop", warnings: [] });
+
+    await expect(generateDescription("diff", { ...config, variantCount: 1 })).resolves.toEqual([
+      longText,
+    ]);
+  });
 });

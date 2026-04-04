@@ -31,7 +31,8 @@ cli(
       },
       maxLength: {
         type: Number,
-        description: "Max generated title length for this run (default: 72)",
+        description:
+          "Max generated title length for this run (default: 72, it's a soft guidance for the model, not a local hard cutoff)",
       },
       maxDiffChars: {
         type: Number,

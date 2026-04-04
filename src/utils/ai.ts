@@ -39,11 +39,7 @@ const printVerboseResponse = (rawText: string, finishReason: string, warnings: u
   process.stderr.write(`${lines.join("\n")}\n`);
 };
 
-const truncateToLength = (message: string, maxLength: number) =>
-  message.length > maxLength ? message.slice(0, maxLength).trim() : message;
-
-const normalizeDescription = (message: string, maxLength: number) =>
-  truncateToLength(message.trim(), maxLength);
+const normalizeDescription = (message: string) => message.trim();
 
 type ProviderResult = {
   rawText: string;
@@ -108,7 +104,7 @@ const generateSingleDescription = async (
     );
   }
 
-  const message = normalizeDescription(providerResult.rawText, config.maxLength);
+  const message = normalizeDescription(providerResult.rawText);
 
   if (!message) {
     throw new KnownError(
