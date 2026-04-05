@@ -150,15 +150,6 @@ export const getConfig = async (options?: GetConfigOptions): Promise<Config> => 
   return parseConfig(merged);
 };
 
-export type CliConfigOverrides = {
-  provider?: string;
-  locale?: string;
-  type?: string;
-  maxLength?: number;
-  maxDiffChars?: number;
-  count?: number;
-};
-
 const validateConfig = (config: Record<string, unknown>) => {
   const result = configSchema.safeParse(config);
   if (!result.success) {

@@ -37,7 +37,8 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "knip": "knip"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.66",
@@ -51,6 +52,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
+    "knip": "^6.3.0",
     "kolorist": "^1.8.0",
     "oxfmt": "^0.35.0",
     "oxlint": "^1.58.0",

@@ -3,8 +3,8 @@ import { getProviderDefaultModel, PROVIDER_IDS, type AiProvider } from "./provid
 export { PROVIDER_IDS, type AiProvider };
 export type CommitType = "conventional" | "plain";
 
-export const PROVIDER_CONFIG_KEY_TYPES = ["apiKey", "model", "baseURL"] as const;
-export type ProviderConfigKeyType = (typeof PROVIDER_CONFIG_KEY_TYPES)[number];
+const PROVIDER_CONFIG_KEY_TYPES = ["apiKey", "model", "baseURL"] as const;
+type ProviderConfigKeyType = (typeof PROVIDER_CONFIG_KEY_TYPES)[number];
 type ProviderConfigKey = `providers.${AiProvider}.${ProviderConfigKeyType}`;
 
 export type ConfigKey =
@@ -58,7 +58,7 @@ export const SENSITIVE_CONFIG_KEYS: ConfigKey[] = PROVIDER_IDS.map(
   (provider) => `providers.${provider}.apiKey` as ConfigKey,
 );
 
-export type ProviderAliasKey = ProviderConfigKeyType;
+type ProviderAliasKey = ProviderConfigKeyType;
 
 export const isProviderAliasKey = (value: string): value is ProviderAliasKey =>
   (PROVIDER_CONFIG_KEY_TYPES as readonly string[]).includes(value);
