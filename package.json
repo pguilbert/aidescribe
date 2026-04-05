@@ -29,6 +29,7 @@
   "type": "module",
   "scripts": {
     "build": "pkgroll --minify",
+    "ci": "pnpm lint && pnpm fmt:check && pnpm typecheck && pnpm test && pnpm build",
     "typecheck": "tsc",
     "dev": "tsx src/cli.ts",
     "prepack": "npm run build",
