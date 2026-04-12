@@ -5,10 +5,17 @@ import aidescribeCommand from "./commands/aidescribe.js";
 import configCommand from "./commands/config.js";
 import connectCommand from "./commands/connect.js";
 import pkg from "../package.json";
+import updateNotifier from "update-notifier";
 
 const { description, version } = pkg;
 
 const rawArgv = process.argv.slice(2);
+
+updateNotifier({
+  pkg,
+}).notify({
+  isGlobal: true,
+});
 
 cli(
   {
