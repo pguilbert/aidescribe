@@ -15,7 +15,7 @@
 npx aidescribe
 
 # or install globally
-pnpm add -g aidescribe
+npm i -g aidescribe
 ```
 
 Generate a description:
