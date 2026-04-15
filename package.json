@@ -18,7 +18,7 @@
   "author": "Paul Guilbert",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pguilbert/aidescribe.git"
+    "url": "git+https://github.com/pguilbert/aidescribe.git"
   },
   "bin": {
     "aidescribe": "dist/cli.mjs"
