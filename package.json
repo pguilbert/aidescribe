@@ -45,29 +45,29 @@
     "version-packages": "changeset version"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.69",
+    "@ai-sdk/anthropic": "^3.0.71",
     "@ai-sdk/mistral": "^3.0.30",
-    "@ai-sdk/openai": "^3.0.52",
+    "@ai-sdk/openai": "^3.0.53",
     "@clack/prompts": "^1.2.0",
-    "ai": "^6.0.158",
-    "cleye": "^2.3.0",
+    "ai": "^6.0.168",
+    "cleye": "^2.6.0",
     "tinyexec": "^1.1.1",
     "update-notifier": "^7.3.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",
-    "@changesets/cli": "^2.30.0",
+    "@changesets/cli": "^2.31.0",
     "@types/node": "^25.6.0",
     "@types/update-notifier": "^6.0.8",
-    "knip": "^6.4.0",
+    "knip": "^6.6.1",
     "kolorist": "^1.8.0",
     "oxfmt": "^0.35.0",
-    "oxlint": "^1.59.0",
+    "oxlint": "^1.61.0",
     "pkgroll": "^2.27.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.5"
   },
   "engines": {
     "node": ">=20"
