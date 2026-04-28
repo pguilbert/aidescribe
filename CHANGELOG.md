@@ -2,6 +2,8 @@
 
 ## 0.0.5 encore un test ceci est encore un test
 
+test test
+
 ### Patch Changes
 
 - [`583ce4e`](https://github.com/pguilbert/aidescribe/commit/583ce4e06ffa55a629a32dc4bf54af12c4123b68) Thanks [@pguilbert](https://github.com/pguilbert)! - Replace `execa` with `tinyexec` for jj command execution
