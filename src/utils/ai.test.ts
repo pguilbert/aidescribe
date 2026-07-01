@@ -37,6 +37,7 @@ const config: Config = {
   "providers.openai.model": "gpt-5-mini",
   "providers.anthropic.model": "claude-haiku-4-5",
   "providers.mistral.model": "mistral-small-latest",
+  "providers.openrouter.model": "openai/gpt-5-mini",
 };
 
 describe("generateDescription", () => {

@@ -1,8 +1,9 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createMistral } from "@ai-sdk/mistral";
 import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
-export const PROVIDER_IDS = ["openai", "anthropic", "mistral"] as const;
+export const PROVIDER_IDS = ["openai", "anthropic", "mistral", "openrouter"] as const;
 export type AiProvider = (typeof PROVIDER_IDS)[number];
 
 type ProviderClientOptions = {
@@ -39,6 +40,17 @@ const PROVIDERS: Record<AiProvider, ProviderDefinition> = {
     defaultBaseURL: "https://api.mistral.ai/v1",
     apiMode: "mistral-chat",
     createClient: ({ apiKey, baseURL }) => createMistral({ apiKey, baseURL }),
+  },
+  openrouter: {
+    label: "OpenRouter",
+    defaultModel: "openai/gpt-5-mini",
+    defaultBaseURL: "https://openrouter.ai/api/v1",
+    apiMode: "openrouter-native",
+    createClient: ({ apiKey, baseURL }) =>
+      createOpenRouter({
+        apiKey,
+        baseURL: baseURL ?? "https://openrouter.ai/api/v1",
+      }),
   },
 } as const;
 

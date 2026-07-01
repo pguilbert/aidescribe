@@ -30,6 +30,7 @@ export const DEFAULT_CONFIG: Config = {
   "providers.openai.model": getProviderDefaultModel("openai"),
   "providers.anthropic.model": getProviderDefaultModel("anthropic"),
   "providers.mistral.model": getProviderDefaultModel("mistral"),
+  "providers.openrouter.model": getProviderDefaultModel("openrouter"),
 };
 
 export const CONFIG_KEYS: readonly ConfigKey[] = [

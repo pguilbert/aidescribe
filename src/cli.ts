@@ -6,6 +6,7 @@ import configCommand from "./commands/config.js";
 import connectCommand from "./commands/connect.js";
 import pkg from "../package.json";
 import updateNotifier from "update-notifier";
+import { PROVIDER_IDS } from "./utils/config-types.js";
 
 const { description, version } = pkg;
 
@@ -24,7 +25,7 @@ cli(
     flags: {
       provider: {
         type: String,
-        description: "Override provider for this run (supported: openai, anthropic, mistral)",
+        description: `Override provider for this run (supported: ${PROVIDER_IDS.join(", ")})`,
       },
       locale: {
         type: String,

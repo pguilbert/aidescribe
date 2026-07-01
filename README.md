@@ -45,7 +45,7 @@ Run the interactive setup once to connect your AI provider and save config:
 aidescribe connect
 ```
 
-This saves config to `~/.aidescribe.json`. Currently OpenAI, Anthropic, and Mistral providers are supported.
+This saves config to `~/.aidescribe.json`. Currently OpenAI, Anthropic, Mistral, and OpenRouter providers are supported.
 
 ## Config
 
@@ -79,7 +79,7 @@ Flags:
       --max-diff-chars <number>        Max diff chars sent to AI for this run (default: 40000)
       --max-length <number>            Max generated title length for this run (default: 72, its a soft guidance for the
                                        model, not a local hard cutoff)
-      --provider <string>              Override provider for this run (supported: openai, anthropic, mistral)
+      --provider <string>              Override provider for this run (supported: openai, anthropic, mistral, openrouter)
   -t, --type <string>                  Message format for this run (default: conventional, supports: conventional, plain)
       --verbose                        Print the exact prompt payload sent to the AI model for this run
       --version                        Show version

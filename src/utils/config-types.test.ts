@@ -15,6 +15,7 @@ describe("isConfigKey", () => {
     expect(isConfigKey("providers.openai.apiKey")).toBe(true);
     expect(isConfigKey("providers.anthropic.model")).toBe(true);
     expect(isConfigKey("providers.mistral.baseURL")).toBe(true);
+    expect(isConfigKey("providers.openrouter.apiKey")).toBe(true);
   });
 
   it("returns false for invalid keys", () => {
@@ -33,7 +34,7 @@ describe("provider key aliases", () => {
   });
 
   it("maps alias to provider-scoped config key", () => {
-    expect(toProviderConfigKey("mistral", "apiKey")).toBe("providers.mistral.apiKey");
+    expect(toProviderConfigKey("openrouter", "apiKey")).toBe("providers.openrouter.apiKey");
   });
 });
 
@@ -52,6 +53,8 @@ describe("getActiveProviderConfig", () => {
       "providers.anthropic.model": "claude-3-5-haiku-latest",
       "providers.mistral.apiKey": "sk-mistral",
       "providers.mistral.model": "mistral-small-latest",
+      "providers.openrouter.apiKey": "sk-or",
+      "providers.openrouter.model": "openai/gpt-5-mini",
     };
     expect(getActiveProviderConfig(config)).toEqual({
       provider: "openai",
@@ -75,6 +78,8 @@ describe("getActiveProviderConfig", () => {
       "providers.anthropic.model": "claude-3-5-haiku-latest",
       "providers.mistral.apiKey": "sk-mistral",
       "providers.mistral.model": "mistral-small-latest",
+      "providers.openrouter.apiKey": "sk-or",
+      "providers.openrouter.model": "openai/gpt-5-mini",
     };
     expect(getActiveProviderConfig(config)).toEqual({
       provider: "anthropic",
@@ -99,12 +104,40 @@ describe("getActiveProviderConfig", () => {
       "providers.mistral.apiKey": "sk-mistral",
       "providers.mistral.model": "mistral-medium-latest",
       "providers.mistral.baseURL": "https://custom.mistral/v1",
+      "providers.openrouter.apiKey": "sk-or",
+      "providers.openrouter.model": "openai/gpt-5-mini",
     };
     expect(getActiveProviderConfig(config)).toEqual({
       provider: "mistral",
       apiKey: "sk-mistral",
       model: "mistral-medium-latest",
       baseURL: "https://custom.mistral/v1",
+    });
+  });
+
+  it("returns openrouter config when provider is openrouter", () => {
+    const config: Config = {
+      provider: "openrouter",
+      locale: "en",
+      type: "conventional",
+      maxLength: 72,
+      maxDiffChars: 40_000,
+      variantCount: 1,
+      "providers.openai.apiKey": "sk-openai",
+      "providers.openai.model": "gpt-5-mini",
+      "providers.anthropic.apiKey": "sk-ant",
+      "providers.anthropic.model": "claude-3-5-haiku-latest",
+      "providers.mistral.apiKey": "sk-mistral",
+      "providers.mistral.model": "mistral-medium-latest",
+      "providers.openrouter.apiKey": "sk-or",
+      "providers.openrouter.model": "anthropic/claude-3.5-haiku",
+      "providers.openrouter.baseURL": "https://custom.openrouter/v1",
+    };
+    expect(getActiveProviderConfig(config)).toEqual({
+      provider: "openrouter",
+      apiKey: "sk-or",
+      model: "anthropic/claude-3.5-haiku",
+      baseURL: "https://custom.openrouter/v1",
     });
   });
 });

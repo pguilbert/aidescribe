@@ -49,6 +49,7 @@
     "@ai-sdk/mistral": "^4.0.3",
     "@ai-sdk/openai": "^4.0.5",
     "@clack/prompts": "^1.6.0",
+    "@openrouter/ai-sdk-provider": "^2.10.0",
     "ai": "^7.0.11",
     "cleye": "^2.6.0",
     "tinyexec": "^1.2.4",
