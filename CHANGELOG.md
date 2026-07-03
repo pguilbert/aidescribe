@@ -1,5 +1,15 @@
 # aidescribe
 
+## 0.0.6
+
+### Patch Changes
+
+- [`0a138e0`](https://github.com/pguilbert/aidescribe/commit/0a138e0b1c9de533b8f0d940bedac3456b3a32e6) Thanks [@pguilbert](https://github.com/pguilbert)! - Update all dependencies
+
+- [`6341d98`](https://github.com/pguilbert/aidescribe/commit/6341d989483a9abb636924accc0bbbdb5499fb80) Thanks [@pguilbert](https://github.com/pguilbert)! - Add OpenRouter provider support
+
+- [`c49194d`](https://github.com/pguilbert/aidescribe/commit/c49194d6a980d5d1fbb6f66bb1874b5fd5dd90f3) Thanks [@pguilbert](https://github.com/pguilbert)! - Lower Node engine floor to 20
+
 ## 0.0.5
 
 ### Patch Changes
