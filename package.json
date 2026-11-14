@@ -1,6 +1,6 @@
 {
   "name": "aidescribe",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Generate jj change descriptions with AI",
   "keywords": [
     "ai",
@@ -45,32 +45,32 @@
     "version-packages": "changeset version"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.5",
-    "@ai-sdk/mistral": "^4.0.3",
-    "@ai-sdk/openai": "^4.0.5",
-    "@clack/prompts": "^1.6.0",
-    "@openrouter/ai-sdk-provider": "^2.10.0",
-    "ai": "^7.0.11",
-    "cleye": "^2.6.0",
-    "tinyexec": "^1.2.4",
+    "@ai-sdk/anthropic": "^4.0.104",
+    "@ai-sdk/mistral": "^4.0.86",
+    "@ai-sdk/openai": "^4.0.117",
+    "@clack/prompts": "^1.9.0",
+    "@openrouter/ai-sdk-provider": "^3.1.0",
+    "ai": "^7.0.172",
+    "cleye": "^2.7.0",
+    "tinyexec": "^1.3.1",
     "update-notifier": "^7.3.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.7.0",
-    "@changesets/cli": "^2.31.0",
-    "@types/node": "^26.1.0",
-    "@types/update-notifier": "^6.0.8",
-    "knip": "^6.23.0",
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
+    "@types/node": "^26.6.6",
+    "@types/update-notifier": "^6.0.9",
+    "knip": "^6.45.1",
     "kolorist": "^1.8.0",
-    "oxfmt": "^0.57.0",
-    "oxlint": "^1.72.0",
-    "pkgroll": "^2.27.1",
-    "tsx": "^4.22.4",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "pkgroll": "^2.29.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12.0"
   }
 }

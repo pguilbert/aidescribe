@@ -1,5 +1,12 @@
 # aidescribe
 
+## 0.0.7
+
+### Patch Changes
+
+- Update all dependencies to their latest stable versions.
+- Require Node.js 22.12.0 or newer to support the updated dependencies.
+
 ## 0.0.6
 
 ### Patch Changes

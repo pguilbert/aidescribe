@@ -33,7 +33,7 @@ Only inlined `<REVSETS>` and `-r` are forwarded to `jj`.
 
 ## Requirements
 
-- Node.js `>=22`
+- Node.js `>=22.12.0`
 - `jj` installed
 - Run inside a Jujutsu repository
 
